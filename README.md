@@ -82,9 +82,12 @@ Next.js (App Router) + MUI, built directly against the live API described above 
 
 Run it: `npm run dev:web` → http://localhost:3000 (needs the backend running too; see above). Log in with one of the seeded accounts.
 
-Pages (all under the authenticated app shell, admin-only ones hidden from staff in the nav):
-- **Login** — email/password against `/api/auth/login`.
-- **Dashboard** — today's KPIs; admin sees money figures, staff sees stock-only figures.
+Pages:
+- **Landing** (`/`) — public, unauthenticated marketing page (static, no API calls); the "Log in" CTA leads to Login.
+- **Login** (`/login`) — email/password against `/api/auth/login`.
+
+Everything below lives under the authenticated app shell (admin-only ones hidden from staff in the nav):
+- **Dashboard** (`/dashboard`) — today's KPIs; admin sees money figures, staff sees stock-only figures.
 - **Sales** — fast sale entry (product search, qty steppers, running total, payment split) + sales history with returns.
 - **Production** — record batches (BoM auto-fills consumption, editable actuals/wastage) + batch history.
 - **Purchases** — record stock-in from suppliers + purchase history.

@@ -9,5 +9,5 @@ export async function login(page: Page, creds: { email: string; password: string
   await page.getByLabel('Email').fill(creds.email);
   await page.getByLabel('Password').fill(creds.password);
   await page.getByRole('button', { name: 'Log in' }).click();
-  await page.waitForURL('/');
+  await page.waitForURL('/dashboard');
 }
