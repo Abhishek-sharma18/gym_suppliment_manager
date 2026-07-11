@@ -19,6 +19,32 @@ Install once from the repo root: `npm install`
 Workspaces: `shared/` (zod contract) · `backend/` (Express API) · `frontend/` (Next.js + MUI).
 See `CLAUDE.md` for project conventions and `docs/superpowers/` for the spec & plans.
 
+## API
+
+Base URL: `http://localhost:5000/api`
+
+Load demo data (idempotent - skips if any user already exists): `npm run seed --workspace backend`
+
+Seeded logins (change these before any real deployment):
+- `admin@gym.local` / `Admin@123!` (role: admin)
+- `staff@gym.local` / `Staff@123!` (role: staff)
+
+Route groups:
+- `auth` - login / logout / current user
+- `users` - user accounts (admin only)
+- `materials` - raw material master data + stock cache
+- `products` - finished product master data + BoM
+- `suppliers` - supplier master data
+- `customers` - customer master data + udhaar balance
+- `purchases` - stock-in from suppliers (moving-average cost)
+- `production` - production batches (BoM consumption -> finished goods)
+- `sales` - sales + returns (cash and udhaar)
+- `payments` - udhaar collection from customers
+- `expenses` - shop expenses (admin only)
+- `movements` - read-only stock ledger (stock_movements)
+- `reports` - stock, sales, and P&L summaries
+- `admin/recount` - recompute cached quantities/costs from the ledger (admin only)
+
 ## Environment variables
 
 | File | Variable | What it is |
