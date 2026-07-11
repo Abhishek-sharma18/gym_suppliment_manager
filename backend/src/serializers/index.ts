@@ -34,3 +34,9 @@ export function serializeSupplier(doc: AnyDoc, _role: Role): Record<string, unkn
 export function serializeCustomer(doc: AnyDoc, _role: Role): Record<string, unknown> {
   return baseDoc(doc);
 }
+
+export function serializeMovement(doc: AnyDoc, role: Role): Record<string, unknown> {
+  const o = baseDoc(doc);
+  if (role !== 'admin') delete o.unitCost;
+  return o;
+}

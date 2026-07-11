@@ -6,6 +6,7 @@ import { authRouter } from './routes/auth';
 import { requireAuth, requireRole } from './middleware/auth';
 import { usersRouter } from './routes/users';
 import { materialsRouter, productsRouter, suppliersRouter, customersRouter } from './routes/masterData';
+import { movementsRouter } from './routes/movements';
 
 export function createApp(): express.Express {
   const app = express();
@@ -28,6 +29,7 @@ export function createApp(): express.Express {
   app.use('/api/products', requireAuth, productsRouter);
   app.use('/api/suppliers', requireAuth, suppliersRouter);
   app.use('/api/customers', requireAuth, customersRouter);
+  app.use('/api/movements', requireAuth, movementsRouter);
 
   app.use((_req, res) => {
     res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Route not found' } });
