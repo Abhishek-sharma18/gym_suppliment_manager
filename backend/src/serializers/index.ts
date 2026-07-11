@@ -14,3 +14,23 @@ export function serializeUser(doc: AnyDoc, _role: Role): Record<string, unknown>
   const { passwordHash, ...rest } = baseDoc(doc);
   return rest;
 }
+
+export function serializeMaterial(doc: AnyDoc, role: Role): Record<string, unknown> {
+  const o = baseDoc(doc);
+  if (role !== 'admin') delete o.avgCost;
+  return o;
+}
+
+export function serializeProduct(doc: AnyDoc, role: Role): Record<string, unknown> {
+  const o = baseDoc(doc);
+  if (role !== 'admin') delete o.avgUnitCost;
+  return o;
+}
+
+export function serializeSupplier(doc: AnyDoc, _role: Role): Record<string, unknown> {
+  return baseDoc(doc);
+}
+
+export function serializeCustomer(doc: AnyDoc, _role: Role): Record<string, unknown> {
+  return baseDoc(doc);
+}
