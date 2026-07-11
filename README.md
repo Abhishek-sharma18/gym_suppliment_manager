@@ -10,21 +10,14 @@ gym project/
 
 ## Running the app
 
-Open two terminals:
+Install once from the repo root: `npm install`
 
-**Terminal 1 — backend**
-```bash
-cd backend
-npm run dev
-```
+**Terminal 1 — backend:** `npm run dev:api` → http://localhost:5000 (health check: /api/health)
 
-**Terminal 2 — frontend**
-```bash
-cd frontend
-npm run dev
-```
+**Terminal 2 — frontend:** `npm run dev:web` → http://localhost:3000
 
-Check the API is up: open http://localhost:5000/api/health
+Workspaces: `shared/` (zod contract) · `backend/` (Express API) · `frontend/` (Next.js + MUI).
+See `CLAUDE.md` for project conventions and `docs/superpowers/` for the spec & plans.
 
 ## Environment variables
 
