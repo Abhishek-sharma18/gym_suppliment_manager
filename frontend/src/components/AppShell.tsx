@@ -24,6 +24,7 @@ import ShoppingCartOutlinedIcon from '@mui/icons-material/ShoppingCartOutlined';
 import Inventory2OutlinedIcon from '@mui/icons-material/Inventory2Outlined';
 import CategoryOutlinedIcon from '@mui/icons-material/CategoryOutlined';
 import PeopleOutlinedIcon from '@mui/icons-material/PeopleOutlined';
+import LocalShippingOutlinedIcon from '@mui/icons-material/LocalShippingOutlined';
 import PaymentsOutlinedIcon from '@mui/icons-material/PaymentsOutlined';
 import AssessmentOutlinedIcon from '@mui/icons-material/AssessmentOutlined';
 import ManageAccountsOutlinedIcon from '@mui/icons-material/ManageAccountsOutlined';
@@ -44,6 +45,7 @@ const NAV_ITEMS: NavItem[] = [
   { label: 'Production', href: '/production', icon: <PrecisionManufacturingOutlinedIcon /> },
   { label: 'Purchases', href: '/purchases', icon: <ShoppingCartOutlinedIcon /> },
   { label: 'Materials', href: '/materials', icon: <Inventory2OutlinedIcon /> },
+  { label: 'Suppliers', href: '/suppliers', icon: <LocalShippingOutlinedIcon /> },
   { label: 'Products', href: '/products', icon: <CategoryOutlinedIcon /> },
   { label: 'Customers', href: '/customers', icon: <PeopleOutlinedIcon /> },
   { label: 'Expenses', href: '/expenses', icon: <PaymentsOutlinedIcon />, adminOnly: true },
