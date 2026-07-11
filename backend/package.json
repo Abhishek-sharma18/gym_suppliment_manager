@@ -2,7 +2,7 @@
   "name": "gym-backend",
   "version": "1.0.0",
   "description": "Backend API for the gym project (Express + MongoDB)",
-  "main": "src/server.js",
+  "main": "src/server.ts",
   "type": "module",
   "scripts": {
     "dev": "tsx watch src/server.ts",
