@@ -9,11 +9,18 @@ import DialogActions from '@mui/material/DialogActions';
 import Button from '@mui/material/Button';
 import Alert from '@mui/material/Alert';
 import Stack from '@mui/material/Stack';
+import { ZodError } from 'zod';
 import { ApiClientError } from '@/lib/api';
+import { zodErrorToFields } from '@/lib/zodFields';
 
 export interface FormDialogRenderProps {
-  /** Per-field helper text from the last ApiClientError.fields, keyed by field name. */
+  /** Per-field helper text from the last validation failure (client ZodError or server ApiClientError.fields), keyed by field name. */
   fieldError: (name: string) => string | undefined;
+}
+
+interface FormErrorState {
+  message: string;
+  fields?: Record<string, string>;
 }
 
 export interface FormDialogProps {
@@ -28,11 +35,12 @@ export interface FormDialogProps {
 
 /**
  * Modal form shell shared by every create/edit dialog. Submits on Enter (native <form>
- * submit). Catches ApiClientError thrown by onSubmit: surfaces .message in an Alert and
- * exposes .fields to the caller's fields via the fieldError(name) render prop.
+ * submit). Catches ApiClientError AND ZodError thrown by onSubmit — both surface a
+ * message in the Alert and per-field text via the fieldError(name) render prop, so
+ * client-side schema.parse() failures behave exactly like server validation errors.
  */
 export function FormDialog({ open, title, onClose, onSubmit, submitLabel = 'Save', pending, children }: FormDialogProps) {
-  const [error, setError] = useState<ApiClientError | null>(null);
+  const [error, setError] = useState<FormErrorState | null>(null);
 
   const fieldError = (name: string): string | undefined => error?.fields?.[name];
 
@@ -48,8 +56,10 @@ export function FormDialog({ open, title, onClose, onSubmit, submitLabel = 'Save
     try {
       await onSubmit();
     } catch (err) {
-      if (err instanceof ApiClientError) {
-        setError(err);
+      if (err instanceof ZodError) {
+        setError({ message: 'Please fix the highlighted fields', fields: zodErrorToFields(err) });
+      } else if (err instanceof ApiClientError) {
+        setError({ message: err.message, fields: err.fields });
       } else {
         throw err;
       }

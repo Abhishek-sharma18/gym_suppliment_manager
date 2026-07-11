@@ -272,7 +272,7 @@ export default function SuppliersPage() {
       <ConfirmDialog
         open={deleteTarget !== null}
         title="Delete supplier"
-        body={`Delete "${deleteTarget?.name ?? ''}"? Removes it from lists; its history stays on the ledger.`}
+        body="Delete this supplier? Their past purchases stay on record."
         confirmLabel="Delete"
         danger
         onClose={() => setDeleteTarget(null)}
