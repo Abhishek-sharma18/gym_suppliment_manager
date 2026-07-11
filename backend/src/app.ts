@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import { errorHandler } from './lib/errors';
+import { authRouter } from './routes/auth';
 
 export function createApp(): express.Express {
   const app = express();
@@ -18,6 +19,7 @@ export function createApp(): express.Express {
   });
 
   // ROUTER MOUNTS (later tasks insert routers here, above the 404 handler)
+  app.use('/api/auth', authRouter);
 
   app.use((_req, res) => {
     res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Route not found' } });
