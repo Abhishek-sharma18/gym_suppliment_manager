@@ -52,6 +52,8 @@ export const saleOut = z.object({
     items: z.array(z.object({ productId: objectId, qty: z.number().int().positive() })),
     refundNote: z.string().optional(),
     udhaarReduced: money.optional(),
+    returnValue: money.optional(), // Rs value of the returned goods at the sale's (weighted-avg) price
+    returnCogs: money.optional(),  // cost of the returned goods at the sale's weighted-avg unitCostAtSale
     createdBy: objectId.optional(),
   })).default([]),
 }).extend(audit.shape);

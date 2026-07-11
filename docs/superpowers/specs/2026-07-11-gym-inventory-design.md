@@ -79,6 +79,7 @@ All docs carry audit fields `createdBy`, `updatedBy` (user ids) and timestamps. 
 - Finished goods: no batch-level FIFO tracking in v1 — each sale line snapshots `unitCostAtSale` from the product's cached `avgUnitCost` at the moment of sale, so profit history never shifts when later batches cost more or less.
 - Overhead: computed at **report time** = month's total expenses ÷ units produced that month.
 - Profit per sale item = unitPrice − unitCostAtSale − overhead per unit for the sale's month. Reports show gross (before overhead) and net (after) so the math is transparent.
+- Returns: each return entry stores `returnValue` and `returnCogs` at return time; profit, dashboard and sales-summary reports deduct returns (by return date) from revenue/COGS/units sold. byPaymentMode breakdowns stay gross. (User decision 2026-07-11.)
 
 ## 7. Auth & RBAC
 

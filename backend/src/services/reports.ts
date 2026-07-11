@@ -87,6 +87,20 @@ export async function udhaarReport(): Promise<UdhaarEntryOut[]> {
   }));
 }
 
+async function returnsInRange(from: Date, to: Date): Promise<{ value: number; cogs: number; units: number }> {
+  const [agg] = await Sale.aggregate<{ value: number; cogs: number; units: number }>([
+    { $unwind: '$returns' },
+    { $match: { 'returns.date': { $gte: from, $lt: to } } },
+    { $project: {
+      value: { $ifNull: ['$returns.returnValue', 0] },
+      cogs: { $ifNull: ['$returns.returnCogs', 0] },
+      units: { $sum: '$returns.items.qty' },
+    } },
+    { $group: { _id: null, value: { $sum: '$value' }, cogs: { $sum: '$cogs' }, units: { $sum: '$units' } } },
+  ]);
+  return { value: round2(agg?.value ?? 0), cogs: round2(agg?.cogs ?? 0), units: agg?.units ?? 0 };
+}
+
 export async function profit(month: string): Promise<ProfitReportOut> {
   const [y, m] = month.split('-').map(Number);
   const from = new Date(Date.UTC(y, m - 1, 1));
@@ -111,11 +125,16 @@ export async function profit(month: string): Promise<ProfitReportOut> {
     { $group: { _id: null, units: { $sum: '$qtyProduced' } } },
   ]);
 
-  const revenue = round2(revAgg?.total ?? 0);
-  const costOfGoodsSold = round2(itemsAgg?.cost ?? 0);
+  const returns = await returnsInRange(from, to);
+
+  const grossRevenue = round2(revAgg?.total ?? 0);
+  const grossCogs = round2(itemsAgg?.cost ?? 0);
+  const revenue = round2(grossRevenue - returns.value);
+  const costOfGoodsSold = round2(grossCogs - returns.cogs);
   const overhead = round2(expAgg?.total ?? 0);
   const unitsProduced = prodAgg?.units ?? 0;
-  const unitsSold = itemsAgg?.units ?? 0;
+  const soldUnits = itemsAgg?.units ?? 0;
+  const unitsSold = soldUnits - returns.units;
   const overheadPerUnit = unitsProduced > 0 ? round2(overhead / unitsProduced) : 0;
   const grossProfit = round2(revenue - costOfGoodsSold);
   const netProfit = round2(grossProfit - overhead);
@@ -133,6 +152,7 @@ export async function salesSummary(from: Date, to: Date, role: Role): Promise<Sa
     { $match: filter },
     { $group: { _id: '$paymentMode', count: { $sum: 1 }, total: { $sum: '$total' } } },
   ]);
+  // byPaymentMode stays GROSS: refunds aren't tied to a payment mode, so returns are not deducted here.
   const byPaymentMode = modeAgg.map((entry) => {
     const line: { mode: PaymentMode; count: number; total?: number } = { mode: entry._id, count: entry.count };
     if (role === 'admin') line.total = round2(entry.total);
@@ -145,7 +165,8 @@ export async function salesSummary(from: Date, to: Date, role: Role): Promise<Sa
       { $match: filter },
       { $group: { _id: null, total: { $sum: '$total' } } },
     ]);
-    out.revenue = round2(revAgg?.total ?? 0);
+    const returns = await returnsInRange(from, to);
+    out.revenue = round2((revAgg?.total ?? 0) - returns.value);
   }
   return out;
 }
@@ -167,7 +188,8 @@ export async function dashboard(role: Role): Promise<DashboardOut> {
       { $match: todayFilter },
       { $group: { _id: null, total: { $sum: '$total' } } },
     ]);
-    out.todaySalesTotal = round2(salesTotalAgg?.total ?? 0);
+    const todayReturns = await returnsInRange(startOfToday, startOfTomorrow);
+    out.todaySalesTotal = round2((salesTotalAgg?.total ?? 0) - todayReturns.value);
     out.stockValue = (await stockValue()).totalValue;
     const [udhaarAgg] = await Customer.aggregate<{ total: number }>([
       { $match: { isDeleted: false } },
