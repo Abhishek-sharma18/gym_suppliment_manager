@@ -19,6 +19,7 @@ import {
 } from '@gym/shared';
 import { postJson, patchJson, deleteJson, ApiClientError } from '@/lib/api';
 import { useListQuery } from '@/lib/useListQuery';
+import { useExpenseRangeTotal } from '@/lib/useExpenseRangeTotal';
 import { localDateValue, dateFmt, enumLabel, EM_DASH } from '@/lib/fmt';
 import { PageHeader } from '@/components/PageHeader';
 import { DataTable } from '@/components/DataTable';
@@ -91,12 +92,10 @@ export default function ExpensesPage() {
     limit: paginationModel.pageSize,
   });
 
-  // Visible-range total: sums every expense matching the current filter, not just the rows
-  // on the current page. There's no dedicated aggregate endpoint, so this fetches up to the
-  // shared list endpoint's page-size cap (100) — the same "load the whole small reference
-  // set" pattern Purchases/Sales use for their supplier/customer lookups.
-  const { rows: rangeRows } = useListQuery('expenses', expenseOut, { ...filterParams, limit: 100 });
-  const visibleRangeTotal = rangeRows.reduce((sum, e) => sum + e.amount, 0);
+  // Visible-range total: no aggregate endpoint exists, so this loop-fetches every matching
+  // page (up to the hook's cap) and reports fetched-vs-total so a partial sum is labelled
+  // honestly instead of rendering as if it covered the whole range.
+  const { data: rangeTotal } = useExpenseRangeTotal(filterParams);
 
   const invalidate = () => queryClient.invalidateQueries({ queryKey: ['expenses'] });
 
@@ -252,12 +251,20 @@ export default function ExpensesPage() {
             onPaginationModelChange={setPaginationModel}
             loading={isLoading}
           />
-          <Box sx={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'baseline', gap: 1, mt: 2 }}>
-            <Box component="span" sx={{ color: 'text.secondary' }}>
-              Total for this range
+          {rangeTotal && (
+            <Box sx={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'baseline', gap: 1, mt: 2 }}>
+              {rangeTotal.fetched < rangeTotal.total ? (
+                <Box component="span" sx={{ color: 'warning.main' }}>
+                  Total of first {rangeTotal.fetched} of {rangeTotal.total} expenses
+                </Box>
+              ) : (
+                <Box component="span" sx={{ color: 'text.secondary' }}>
+                  Total for this range
+                </Box>
+              )}
+              <MoneyText value={rangeTotal.sum} variant="total" />
             </Box>
-            <MoneyText value={visibleRangeTotal} variant="total" />
-          </Box>
+          )}
         </>
       )}
 

@@ -76,12 +76,12 @@ export default function DashboardPage() {
             )}
             {data.stockValue !== undefined && (
               <KpiCard label="Stock value">
-                <MoneyText value={data.stockValue} />
+                <MoneyText value={data.stockValue} variant="total" />
               </KpiCard>
             )}
             {data.udhaarOutstanding !== undefined && (
               <KpiCard label="Udhaar outstanding">
-                <MoneyText value={data.udhaarOutstanding} udhaar />
+                <MoneyText value={data.udhaarOutstanding} variant="total" udhaar />
               </KpiCard>
             )}
           </>
