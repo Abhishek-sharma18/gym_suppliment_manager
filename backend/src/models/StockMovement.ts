@@ -32,10 +32,11 @@ const schema = new Schema<IStockMovement>({
 const IMMUTABLE = (): never => {
   throw new ApiError(400, 'IMMUTABLE', 'stock_movements are immutable - corrections are new ADJUSTMENT movements');
 };
-for (const op of ['updateOne', 'updateMany', 'findOneAndUpdate', 'findOneAndReplace', 'replaceOne',
-  'deleteOne', 'deleteMany', 'findOneAndDelete'] as const) {
-  schema.pre(op as 'updateOne', IMMUTABLE);
+for (const op of ['updateMany', 'findOneAndUpdate', 'findOneAndReplace', 'replaceOne',
+  'deleteMany', 'findOneAndDelete'] as const) {
+  schema.pre(op as 'updateMany', IMMUTABLE);
 }
+schema.pre(['updateOne', 'deleteOne'], { document: true, query: true }, IMMUTABLE);
 schema.pre('save', function () {
   if (!this.isNew) IMMUTABLE();
 });

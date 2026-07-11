@@ -15,6 +15,9 @@ describe('stock_movements immutability', () => {
     mv.qty = 42;
     await expect(mv.save()).rejects.toThrow(/immutable/i);
     expect((await StockMovement.findById(mv._id))!.qty).toBe(5);
+    const doc = await StockMovement.findById(mv._id);
+    await expect(doc!.deleteOne()).rejects.toThrow(/immutable/i);
+    expect(await StockMovement.findById(mv._id)).not.toBeNull();
   });
 });
 
