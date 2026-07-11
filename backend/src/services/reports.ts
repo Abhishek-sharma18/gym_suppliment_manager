@@ -1,65 +1,19 @@
-import type { Role } from '@gym/shared';
+import type { z } from 'zod';
+import type { PaymentMode, Role } from '@gym/shared';
+import {
+  dashboardOut, expiringBatch, lowStockItem, profitReportOut,
+  salesSummaryOut, stockValueOut, udhaarEntry,
+} from '@gym/shared';
 import { Customer, Expense, Material, Product, ProductionBatch, Sale } from '../models';
 import { round2 } from '../lib/round';
 
-interface LowStockItemOut {
-  itemKind: 'RAW' | 'FINISHED';
-  itemId: string;
-  name: string;
-  unit: string;
-  currentQty: number;
-  reorderLevel: number;
-}
-
-interface ExpiringBatchOut {
-  batchNo: string;
-  productId: string;
-  productName: string;
-  expiryDate: Date;
-  qtyProduced: number;
-}
-
-interface UdhaarEntryOut {
-  customerId: string;
-  name: string;
-  phone?: string;
-  balance: number;
-}
-
-interface StockValueOut {
-  rawValue: number;
-  finishedValue: number;
-  totalValue: number;
-}
-
-interface ProfitReportOut {
-  month: string;
-  revenue: number;
-  costOfGoodsSold: number;
-  grossProfit: number;
-  overhead: number;
-  unitsProduced: number;
-  unitsSold: number;
-  overheadPerUnit: number;
-  netProfit: number;
-}
-
-interface SalesSummaryOut {
-  from: Date;
-  to: Date;
-  count: number;
-  revenue?: number;
-  byPaymentMode: { mode: string; count: number; total?: number }[];
-}
-
-interface DashboardOut {
-  todaySalesCount: number;
-  todaySalesTotal?: number;
-  stockValue?: number;
-  udhaarOutstanding?: number;
-  lowStock: LowStockItemOut[];
-  expiringSoon: ExpiringBatchOut[];
-}
+type LowStockItemOut = z.infer<typeof lowStockItem>;
+type ExpiringBatchOut = z.infer<typeof expiringBatch>;
+type UdhaarEntryOut = z.infer<typeof udhaarEntry>;
+type StockValueOut = z.infer<typeof stockValueOut>;
+type ProfitReportOut = z.infer<typeof profitReportOut>;
+type SalesSummaryOut = z.infer<typeof salesSummaryOut>;
+type DashboardOut = z.infer<typeof dashboardOut>;
 
 export async function stockValue(): Promise<StockValueOut> {
   const [rawAgg] = await Material.aggregate<{ total: number }>([
@@ -175,12 +129,12 @@ export async function profit(month: string): Promise<ProfitReportOut> {
 export async function salesSummary(from: Date, to: Date, role: Role): Promise<SalesSummaryOut> {
   const filter = { date: { $gte: from, $lte: to } };
   const count = await Sale.countDocuments(filter);
-  const modeAgg = await Sale.aggregate<{ _id: string; count: number; total: number }>([
+  const modeAgg = await Sale.aggregate<{ _id: PaymentMode; count: number; total: number }>([
     { $match: filter },
     { $group: { _id: '$paymentMode', count: { $sum: 1 }, total: { $sum: '$total' } } },
   ]);
   const byPaymentMode = modeAgg.map((entry) => {
-    const line: { mode: string; count: number; total?: number } = { mode: entry._id, count: entry.count };
+    const line: { mode: PaymentMode; count: number; total?: number } = { mode: entry._id, count: entry.count };
     if (role === 'admin') line.total = round2(entry.total);
     return line;
   });

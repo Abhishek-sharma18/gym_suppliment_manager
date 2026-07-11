@@ -44,6 +44,7 @@ describe('master data RBAC and shape', () => {
     const staff = await loginAgent(app, STAFF);
     const seen = await staff.get(`/api/products/${prod.body.data._id}`);
     expect(seen.body.data).not.toHaveProperty('avgUnitCost');
+    expect(seen.body.data).not.toHaveProperty('packagingCostPerUnit');
   });
 
   it('soft delete hides from list and get', async () => {

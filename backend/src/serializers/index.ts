@@ -23,7 +23,10 @@ export function serializeMaterial(doc: AnyDoc, role: Role): Record<string, unkno
 
 export function serializeProduct(doc: AnyDoc, role: Role): Record<string, unknown> {
   const o = baseDoc(doc);
-  if (role !== 'admin') delete o.avgUnitCost;
+  if (role !== 'admin') {
+    delete o.avgUnitCost;
+    delete o.packagingCostPerUnit;
+  }
   return o;
 }
 

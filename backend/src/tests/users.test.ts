@@ -44,4 +44,13 @@ describe('users admin CRUD', () => {
     const me = await admin.get('/api/auth/me');
     expect((await admin.delete(`/api/users/${me.body.data._id}`)).status).toBe(400);
   });
+
+  it('creating a user with an email that already exists returns 409 DUPLICATE', async () => {
+    const admin = await loginAgent(app, ADMIN);
+    const res = await admin.post('/api/users').send({
+      name: 'Duplicate', email: STAFF.email, password: 'password-123', role: 'staff',
+    });
+    expect(res.status).toBe(409);
+    expect(res.body.error.code).toBe('DUPLICATE');
+  });
 });

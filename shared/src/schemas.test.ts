@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { ITEM_KINDS, MOVEMENT_TYPES, ROLES } from './enums';
 import { listQuery, objectId } from './common';
 import { materialCreate, materialUpdate } from './materials';
-import { productCreate, productUpdate } from './products';
+import { productCreate, productOut, productUpdate } from './products';
 import { adjustmentCreate } from './movements';
 import { saleCreate } from './sales';
 import { consumeLineIn } from './production';
@@ -41,6 +41,17 @@ describe('master data', () => {
     const p = productCreate.parse({ name: 'Protein Jar 1kg', sellingPrice: 2500 });
     expect(p.bom).toEqual([]);
     expect(p.packagingCostPerUnit).toBe(0);
+  });
+  it('productOut parses a staff-shaped product (no avgUnitCost, no packagingCostPerUnit)', () => {
+    expect(productOut.safeParse({
+      _id: '64b7f3a2c9e77a0012345678',
+      name: 'Protein Jar', variant: '1kg', sellingPrice: 2500,
+      bom: [{ materialId: '64b7f3a2c9e77a0012345678', qtyPerUnit: 900 }],
+      reorderLevel: 0,
+      currentQty: 10,
+      isDeleted: false,
+      createdAt: '2026-07-11', updatedAt: '2026-07-11',
+    }).success).toBe(true);
   });
 });
 

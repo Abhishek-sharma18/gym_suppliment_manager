@@ -34,7 +34,7 @@ expensesRouter.patch('/:id', validateBody(expenseUpdate), async (req, res) => {
   const expense = await Expense.findOneAndUpdate(
     { _id: req.params.id },
     { $set: { ...res.locals.body, updatedBy: res.locals.user._id } },
-    { new: true, runValidators: true },
+    { returnDocument: 'after', runValidators: true },
   );
   if (!expense) throw new ApiError(404, 'NOT_FOUND', 'Expense not found');
   ok(res, serializeExpense(expense, res.locals.user.role));

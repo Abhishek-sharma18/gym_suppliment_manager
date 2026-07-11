@@ -55,6 +55,30 @@ describe('payments', () => {
     const adminList = await admin.get('/api/payments');
     expect(adminList.body.total).toBe(2);
   });
+
+  it('GET /api/payments/:id: staff can fetch their own, gets 404 for another user\'s, admin fetches any', async () => {
+    const customer = await Customer.create({ name: 'Ravi', phone: '9999999999', udhaarBalance: 2000 });
+    const admin = await loginAgent(app, ADMIN);
+    const staff = await loginAgent(app, STAFF);
+
+    const adminPayment = await admin.post('/api/payments').send({
+      customerId: String(customer._id), amount: 200, date: '2026-07-11', paymentMode: 'CASH',
+    });
+    const staffPayment = await staff.post('/api/payments').send({
+      customerId: String(customer._id), amount: 300, date: '2026-07-11', paymentMode: 'UPI',
+    });
+
+    const staffOwn = await staff.get(`/api/payments/${staffPayment.body.data._id}`);
+    expect(staffOwn.status).toBe(200);
+    expect(staffOwn.body.data.amount).toBe(300);
+
+    const staffOnAdmins = await staff.get(`/api/payments/${adminPayment.body.data._id}`);
+    expect(staffOnAdmins.status).toBe(404);
+
+    const adminOnStaffs = await admin.get(`/api/payments/${staffPayment.body.data._id}`);
+    expect(adminOnStaffs.status).toBe(200);
+    expect(adminOnStaffs.body.data.amount).toBe(300);
+  });
 });
 
 describe('expenses', () => {

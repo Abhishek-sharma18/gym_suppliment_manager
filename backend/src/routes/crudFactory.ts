@@ -42,7 +42,7 @@ export function masterDataRouter(opts: {
     const doc = await model.findOneAndUpdate(
       { _id: req.params.id, isDeleted: false },
       { $set: { ...res.locals.body, updatedBy: res.locals.user._id } },
-      { new: true, runValidators: true },
+      { returnDocument: 'after', runValidators: true },
     );
     if (!doc) throw new ApiError(404, 'NOT_FOUND', 'Not found');
     ok(res, opts.serialize(doc, res.locals.user.role));
@@ -52,7 +52,7 @@ export function masterDataRouter(opts: {
     const doc = await model.findOneAndUpdate(
       { _id: req.params.id, isDeleted: false },
       { $set: { isDeleted: true, updatedBy: res.locals.user._id } },
-      { new: true },
+      { returnDocument: 'after' },
     );
     if (!doc) throw new ApiError(404, 'NOT_FOUND', 'Not found');
     ok(res, { deleted: true });

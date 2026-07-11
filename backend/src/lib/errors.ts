@@ -24,6 +24,12 @@ export function errorHandler(err: unknown, _req: Request, res: Response, _next: 
     res.status(400).json({ error: { code: 'INVALID_ID', message: 'Invalid id format' } });
     return;
   }
+  const mongoErr = err as { code?: number; keyPattern?: Record<string, unknown> };
+  if (mongoErr?.code === 11000) {
+    const field = Object.keys(mongoErr.keyPattern ?? {})[0] ?? 'field';
+    res.status(409).json({ error: { code: 'DUPLICATE', message: `That ${field} is already in use` } });
+    return;
+  }
   if (err instanceof ApiError) {
     res.status(err.status).json({
       error: { code: err.code, message: err.message, ...(err.fields ? { fields: err.fields } : {}) },

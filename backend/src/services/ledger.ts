@@ -19,6 +19,8 @@ export interface PostMovementInput {
 }
 
 // CLAUDE.md rule 1: the ONLY code path that writes stock_movements and touches cached currentQty.
+// Callers MUST wrap calls in mongoose.connection.transaction (or withTransaction) so
+// write-conflict retries re-run the closure and re-read fresh stock state.
 export async function postMovement(input: PostMovementInput, session: ClientSession): Promise<{ newQty: number }> {
   if (!Number.isFinite(input.qty) || input.qty === 0) {
     throw new ApiError(400, 'BAD_MOVEMENT', 'Movement qty must be a non-zero number');

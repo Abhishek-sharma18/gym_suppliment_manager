@@ -69,7 +69,18 @@ describe('adjustment + movements routes', () => {
     expect(adminList.body.total).toBe(1);
     expect(adminList.body.data[0].qty).toBe(-5);
 
-    const staffList = await staff.get(`/api/movements?itemId=${m._id}`);
+    const adminUser = (await User.findOne({ email: ADMIN.email }))!;
+    await mongoose.connection.transaction(async (session) => {
+      await postMovement({
+        type: 'PURCHASE_IN', itemKind: 'RAW', itemId: m._id, qty: 20,
+        unitCost: 0.35, refType: 'PURCHASE', userId: adminUser._id,
+      }, session);
+    });
+
+    const adminPurchaseList = await admin.get(`/api/movements?itemId=${m._id}&type=PURCHASE_IN`);
+    expect(adminPurchaseList.body.data[0]).toHaveProperty('unitCost');
+
+    const staffList = await staff.get(`/api/movements?itemId=${m._id}&type=PURCHASE_IN`);
     expect(staffList.body.data[0]).not.toHaveProperty('unitCost');
   });
 });

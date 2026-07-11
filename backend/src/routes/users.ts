@@ -36,7 +36,7 @@ usersRouter.patch('/:id', validateBody(userUpdate), async (req, res) => {
   const { password, ...rest } = res.locals.body;
   const update: Record<string, unknown> = { ...rest, updatedBy: res.locals.user._id };
   if (password) update.passwordHash = await bcrypt.hash(password, 10);
-  const user = await User.findByIdAndUpdate(req.params.id, { $set: update }, { new: true, runValidators: true });
+  const user = await User.findByIdAndUpdate(req.params.id, { $set: update }, { returnDocument: 'after', runValidators: true });
   if (!user) throw new ApiError(404, 'NOT_FOUND', 'User not found');
   ok(res, serializeUser(user, 'admin'));
 });
@@ -46,7 +46,7 @@ usersRouter.delete('/:id', async (req, res) => {
     throw new ApiError(400, 'SELF_DEACTIVATE', 'You cannot deactivate your own account');
   }
   const user = await User.findByIdAndUpdate(req.params.id,
-    { $set: { isActive: false, updatedBy: res.locals.user._id } }, { new: true });
+    { $set: { isActive: false, updatedBy: res.locals.user._id } }, { returnDocument: 'after' });
   if (!user) throw new ApiError(404, 'NOT_FOUND', 'User not found');
   ok(res, { deactivated: true });
 });

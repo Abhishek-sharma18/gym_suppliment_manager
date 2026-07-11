@@ -2584,3 +2584,17 @@ export async function runRecount(): Promise<{ driftsFound: number; details: Drif
 - **Phase 1b — Frontend screens** (MUI shell + all pages against msw mocks of this API) — plan written after this one completes.
 - **Phase 2 — Integration** (frontend against the real seeded API, end-to-end flows).
 - Deferred minors from the Phase 0 review: `z.coerce.date()` accepts junk-typed query input (accepted); staff-payment permission interpretation to confirm with the user.
+
+---
+
+## Post-review amendments (2026-07-11, final whole-branch review)
+
+1. Added `GET /api/payments/:id` (spec section 8 promised create+list+get).
+2. `errorHandler` maps Mongo duplicate-key (11000) to 409 DUPLICATE.
+3. `packagingCostPerUnit` stripped from staff product responses; `productOut` field now optional (staff-safe).
+4. Hygiene: postMovement transaction-contract comment; `returnDocument: 'after'` swap; reports.ts types now z.infer of shared schemas; staff movement-strip test now exercises a movement with unitCost.
+
+### Deferred to Phase 2 (explicit decisions needed)
+- **Recount concurrency:** `runRecount()` aggregates then updates non-transactionally; concurrent traffic between aggregate and update can overwrite a fresh cache with a stale sum. Options: per-item transactional re-aggregate, or document "run when idle". Decide in Phase 2.
+- **Returns in profit reports:** `/reports/profit` and `/reports/sales-summary` ignore `returns[]` - revenue/COGS/unitsSold are overstated after returns. Spec section 6 is silent. Decide the accounting treatment in Phase 2.
+- Login timing side-channel, login rate-limiting, JWT_SECRET boot check, self-demotion via PATCH, ad-hoc response schemas ({ deleted: true } etc.), UTC day-boundary convention: recorded, low priority.
