@@ -1,171 +1,176 @@
 'use client';
 
-import { useState } from 'react';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import Button from '@mui/material/Button';
-import TextField from '@mui/material/TextField';
-import IconButton from '@mui/material/IconButton';
-import Stack from '@mui/material/Stack';
-import DeleteOutlineIcon from '@mui/icons-material/DeleteOutlineOutlined';
-import { materialCreate, materialOut, type MaterialOut } from '@gym/shared';
-import type { GridColDef, GridPaginationModel } from '@mui/x-data-grid';
-import { postJson, deleteJson, ApiClientError } from '@/lib/api';
-import { useListQuery } from '@/lib/useListQuery';
-import { qtyFmt } from '@/lib/fmt';
+import type { ReactNode } from 'react';
+import Link from 'next/link';
+import Box from '@mui/material/Box';
+import Paper from '@mui/material/Paper';
+import Typography from '@mui/material/Typography';
+import Skeleton from '@mui/material/Skeleton';
+import Chip from '@mui/material/Chip';
+import List from '@mui/material/List';
+import ListItem from '@mui/material/ListItem';
+import ListItemText from '@mui/material/ListItemText';
+import { useDashboard } from '@/lib/useReports';
+import { dateFmt, qtyFmt } from '@/lib/fmt';
+import { monoFamily } from '@/lib/theme';
 import { PageHeader } from '@/components/PageHeader';
-import { DataTable } from '@/components/DataTable';
 import { MoneyText } from '@/components/MoneyText';
 import { EmptyState } from '@/components/EmptyState';
-import { FormDialog } from '@/components/FormDialog';
-import { ConfirmDialog } from '@/components/ConfirmDialog';
-import { useNotify } from '@/components/SnackbarProvider';
 
-// Temporary demo of the shared UI kit (Task 2). Task 9 replaces this page with the
-// real dashboard; the Materials list UI proper lands in Task 3.
+function KpiCard({ label, children }: { label: string; children: ReactNode }) {
+  return (
+    <Paper variant="outlined" sx={{ p: 2 }}>
+      <Typography variant="body2" color="text.secondary">
+        {label}
+      </Typography>
+      <Box sx={{ mt: 0.5, fontSize: '1.5rem' }}>{children}</Box>
+    </Paper>
+  );
+}
+
+/** Rounds a days-left count to an urgency color: <=7 days red, <=15 days amber, else neutral. */
+function expiryChipColor(daysLeft: number): 'error' | 'warning' | 'default' {
+  if (daysLeft <= 7) return 'error';
+  if (daysLeft <= 15) return 'warning';
+  return 'default';
+}
+
+// Plain (non-component) helper so the Date.now() call doesn't trip react-hooks/purity —
+// same pattern production/page.tsx's expiryChip() uses for the same reason.
+function daysUntil(date: Date): number {
+  return Math.ceil((date.getTime() - Date.now()) / 86_400_000);
+}
+
 export default function DashboardPage() {
-  const notify = useNotify();
-  const queryClient = useQueryClient();
-  const [paginationModel, setPaginationModel] = useState<GridPaginationModel>({ page: 0, pageSize: 10 });
-  const [createOpen, setCreateOpen] = useState(false);
-  const [name, setName] = useState('');
-  const [deleteTarget, setDeleteTarget] = useState<MaterialOut | null>(null);
-
-  const { rows, total, isLoading } = useListQuery('materials', materialOut, {
-    page: paginationModel.page + 1,
-    limit: paginationModel.pageSize,
-  });
-
-  const createMaterial = useMutation({
-    mutationFn: (input: { name: string }) =>
-      postJson<{ data: unknown }>(
-        '/materials',
-        materialCreate.parse({ name: input.name, buyUnit: 'kg', useUnit: 'kg', conversionFactor: 1 }),
-      ),
-    onSuccess: async () => {
-      notify('Material added');
-      setCreateOpen(false);
-      setName('');
-      await queryClient.invalidateQueries({ queryKey: ['materials'] });
-    },
-  });
-
-  const deleteMaterial = useMutation({
-    mutationFn: (id: string) => deleteJson(`/materials/${id}`),
-    onSuccess: async () => {
-      notify('Material deleted');
-      await queryClient.invalidateQueries({ queryKey: ['materials'] });
-    },
-    onError: (err: unknown) => {
-      notify(err instanceof ApiClientError ? err.message : 'Delete failed', 'error');
-    },
-  });
-
-  const columns: GridColDef<MaterialOut>[] = [
-    { field: 'name', headerName: 'Material', flex: 1, minWidth: 160 },
-    { field: 'useUnit', headerName: 'Unit', width: 90 },
-    {
-      field: 'currentQty',
-      headerName: 'Stock',
-      width: 130,
-      valueGetter: (_value, row) => qtyFmt(row.currentQty, row.useUnit),
-    },
-    {
-      field: 'avgCost',
-      headerName: 'Avg cost',
-      width: 130,
-      renderCell: (params) => <MoneyText value={params.row.avgCost} />,
-    },
-    {
-      field: 'value',
-      headerName: 'Stock value',
-      width: 150,
-      renderCell: (params) => (
-        <MoneyText
-          value={params.row.avgCost === undefined ? undefined : params.row.avgCost * params.row.currentQty}
-          variant="total"
-        />
-      ),
-    },
-    {
-      field: 'actions',
-      headerName: '',
-      width: 56,
-      sortable: false,
-      renderCell: (params) => (
-        <IconButton size="small" aria-label="Delete material" onClick={() => setDeleteTarget(params.row)}>
-          <DeleteOutlineIcon fontSize="small" />
-        </IconButton>
-      ),
-    },
-  ];
+  const { data, isLoading } = useDashboard();
 
   return (
     <>
-      <PageHeader
-        title="Dashboard"
-        action={
-          <Button variant="contained" onClick={() => setCreateOpen(true)}>
-            New material
-          </Button>
-        }
-      />
+      <PageHeader title="Dashboard" />
 
-      {!isLoading && rows.length === 0 ? (
-        <EmptyState
-          message="No materials yet — add the first one"
-          actionLabel="New material"
-          onAction={() => setCreateOpen(true)}
-        />
-      ) : (
-        <DataTable<MaterialOut>
-          rows={rows}
-          columns={columns}
-          rowCount={total}
-          paginationModel={paginationModel}
-          onPaginationModelChange={setPaginationModel}
-          loading={isLoading}
-        />
-      )}
-
-      <FormDialog
-        open={createOpen}
-        title="New material"
-        submitLabel="Add material"
-        pending={createMaterial.isPending}
-        onClose={() => setCreateOpen(false)}
-        onSubmit={async () => {
-          await createMaterial.mutateAsync({ name });
+      <Box
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
+          gap: 2,
+          mb: 4,
         }}
       >
-        {({ fieldError }) => (
-          <Stack spacing={2}>
-            <TextField
-              label="Name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              error={Boolean(fieldError('name'))}
-              helperText={fieldError('name')}
-              autoFocus
-              required
-              fullWidth
-            />
-          </Stack>
+        {isLoading || !data ? (
+          <>
+            <Skeleton variant="rounded" height={80} />
+            <Skeleton variant="rounded" height={80} />
+          </>
+        ) : (
+          <>
+            <KpiCard label="Today's sales">
+              <Box component="span" sx={{ fontFamily: monoFamily }}>
+                {data.todaySalesCount}
+              </Box>
+            </KpiCard>
+            {/* Role-shaped: staff responses omit these keys entirely — render only when present. */}
+            {data.todaySalesTotal !== undefined && (
+              <KpiCard label="Today's take">
+                <MoneyText value={data.todaySalesTotal} variant="total" />
+              </KpiCard>
+            )}
+            {data.stockValue !== undefined && (
+              <KpiCard label="Stock value">
+                <MoneyText value={data.stockValue} />
+              </KpiCard>
+            )}
+            {data.udhaarOutstanding !== undefined && (
+              <KpiCard label="Udhaar outstanding">
+                <MoneyText value={data.udhaarOutstanding} udhaar />
+              </KpiCard>
+            )}
+          </>
         )}
-      </FormDialog>
+      </Box>
 
-      <ConfirmDialog
-        open={deleteTarget !== null}
-        title="Delete material"
-        body={`Delete "${deleteTarget?.name ?? ''}"? This cannot be undone.`}
-        confirmLabel="Delete"
-        danger
-        onClose={() => setDeleteTarget(null)}
-        onConfirm={async () => {
-          if (!deleteTarget) return;
-          await deleteMaterial.mutateAsync(deleteTarget._id);
-          setDeleteTarget(null);
+      <Box
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' },
+          gap: 3,
         }}
-      />
+      >
+        <Paper variant="outlined" sx={{ p: 2 }}>
+          <Typography variant="h6" component="h3" sx={{ mb: 1 }}>
+            Low stock
+          </Typography>
+          {isLoading || !data ? (
+            <Skeleton variant="rounded" height={120} />
+          ) : data.lowStock.length === 0 ? (
+            <EmptyState message="Nothing low on stock" />
+          ) : (
+            <List disablePadding>
+              {data.lowStock.map((item) => (
+                <ListItem
+                  key={`${item.itemKind}-${item.itemId}`}
+                  disableGutters
+                  secondaryAction={
+                    <Box component="span" sx={{ fontFamily: monoFamily }}>
+                      {qtyFmt(item.currentQty, item.unit)} / {qtyFmt(item.reorderLevel, item.unit)}
+                    </Box>
+                  }
+                >
+                  <ListItemText
+                    primary={
+                      <Link href={item.itemKind === 'RAW' ? '/materials' : '/products'} style={{ color: 'inherit' }}>
+                        {item.name}
+                      </Link>
+                    }
+                  />
+                </ListItem>
+              ))}
+            </List>
+          )}
+        </Paper>
+
+        <Paper variant="outlined" sx={{ p: 2 }}>
+          <Typography variant="h6" component="h3" sx={{ mb: 1 }}>
+            Expiring soon
+          </Typography>
+          {isLoading || !data ? (
+            <Skeleton variant="rounded" height={120} />
+          ) : data.expiringSoon.length === 0 ? (
+            <EmptyState message="Nothing expiring in the next 30 days" />
+          ) : (
+            <List disablePadding>
+              {data.expiringSoon.map((batch) => {
+                const daysLeft = daysUntil(batch.expiryDate);
+                return (
+                  <ListItem
+                    key={batch.batchNo}
+                    disableGutters
+                    secondaryAction={
+                      <Chip
+                        label={daysLeft <= 0 ? 'Expired' : `${daysLeft}d left`}
+                        size="small"
+                        color={expiryChipColor(daysLeft)}
+                        variant={expiryChipColor(daysLeft) === 'default' ? 'outlined' : 'filled'}
+                      />
+                    }
+                  >
+                    <ListItemText
+                      primary={
+                        <Link href={`/products`} style={{ color: 'inherit' }}>
+                          <Box component="span" sx={{ fontFamily: monoFamily, mr: 1 }}>
+                            {batch.batchNo}
+                          </Box>
+                          {batch.productName}
+                        </Link>
+                      }
+                      secondary={dateFmt(batch.expiryDate)}
+                    />
+                  </ListItem>
+                );
+              })}
+            </List>
+          )}
+        </Paper>
+      </Box>
     </>
   );
 }

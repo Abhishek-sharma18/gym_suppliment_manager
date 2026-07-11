@@ -5,7 +5,13 @@ export const EM_DASH = '—';
 export const inr = (n: number | undefined): string => (n === undefined ? EM_DASH : inrFmt.format(n));
 export const qtyFmt = (n: number, unit: string): string => `${n.toLocaleString('en-IN')} ${unit}`;
 export const dateFmt = (d: Date): string => dateFmtIntl.format(d);
-export const monthValue = (d: Date): string => d.toISOString().slice(0, 7);
+/**
+ * YYYY-MM in LOCAL time — for <input type="month"> values and "current month" defaults.
+ * Same UTC-drift bug class as localDateValue below: toISOString().slice(0, 7) would give
+ * the UTC month, which is the PREVIOUS month before 05:30 IST on the 1st; a profit report
+ * opened at midnight IST on 1 Aug would default to July.
+ */
+export const monthValue = (d: Date): string => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
 
 /**
  * YYYY-MM-DD in LOCAL time — for <input type="date"> values and "today" defaults.
