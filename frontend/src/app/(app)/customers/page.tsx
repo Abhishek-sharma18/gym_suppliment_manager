@@ -18,6 +18,7 @@ import { useListQuery } from '@/lib/useListQuery';
 import { useDebouncedValue } from '@/lib/useDebouncedValue';
 import { useMe } from '@/lib/auth';
 import { EM_DASH } from '@/lib/fmt';
+import { usePageTitle } from '@/lib/usePageTitle';
 import { PageHeader } from '@/components/PageHeader';
 import { DataTable } from '@/components/DataTable';
 import { MoneyText } from '@/components/MoneyText';
@@ -46,6 +47,7 @@ const toPayload = (input: CustomerFormState) => ({
 });
 
 export default function CustomersPage() {
+  usePageTitle('Customers');
   const notify = useNotify();
   const queryClient = useQueryClient();
   const { data: me } = useMe();

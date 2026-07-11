@@ -17,6 +17,7 @@ import { useListQuery } from '@/lib/useListQuery';
 import { useDebouncedValue } from '@/lib/useDebouncedValue';
 import { useMe } from '@/lib/auth';
 import { EM_DASH } from '@/lib/fmt';
+import { usePageTitle } from '@/lib/usePageTitle';
 import { PageHeader } from '@/components/PageHeader';
 import { DataTable } from '@/components/DataTable';
 import { EmptyState } from '@/components/EmptyState';
@@ -49,6 +50,7 @@ const toPayload = (input: SupplierFormState) => ({
 });
 
 export default function SuppliersPage() {
+  usePageTitle('Suppliers');
   const notify = useNotify();
   const queryClient = useQueryClient();
   const { data: me } = useMe();

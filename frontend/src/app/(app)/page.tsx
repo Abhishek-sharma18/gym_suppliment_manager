@@ -13,6 +13,7 @@ import ListItemText from '@mui/material/ListItemText';
 import { useDashboard } from '@/lib/useReports';
 import { dateFmt, qtyFmt } from '@/lib/fmt';
 import { monoFamily } from '@/lib/theme';
+import { usePageTitle } from '@/lib/usePageTitle';
 import { PageHeader } from '@/components/PageHeader';
 import { MoneyText } from '@/components/MoneyText';
 import { EmptyState } from '@/components/EmptyState';
@@ -42,6 +43,7 @@ function daysUntil(date: Date): number {
 }
 
 export default function DashboardPage() {
+  usePageTitle('Dashboard');
   const { data, isLoading } = useDashboard();
 
   return (

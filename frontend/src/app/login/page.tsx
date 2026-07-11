@@ -11,8 +11,10 @@ import Alert from '@mui/material/Alert';
 import Stack from '@mui/material/Stack';
 import { useLogin, useMe } from '@/lib/auth';
 import { ApiClientError } from '@/lib/api';
+import { usePageTitle } from '@/lib/usePageTitle';
 
 export default function LoginPage() {
+  usePageTitle('Log in');
   const router = useRouter();
   const { data: me, isSuccess } = useMe();
   const login = useLogin();

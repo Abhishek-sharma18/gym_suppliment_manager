@@ -20,6 +20,7 @@ import { useDebouncedValue } from '@/lib/useDebouncedValue';
 import { useMe } from '@/lib/auth';
 import { qtyFmt } from '@/lib/fmt';
 import { monoFamily } from '@/lib/theme';
+import { usePageTitle } from '@/lib/usePageTitle';
 import { PageHeader } from '@/components/PageHeader';
 import { DataTable } from '@/components/DataTable';
 import { MoneyText } from '@/components/MoneyText';
@@ -48,6 +49,7 @@ const toFormState = (m: MaterialOut): MaterialFormState => ({
 });
 
 export default function MaterialsPage() {
+  usePageTitle('Materials');
   const notify = useNotify();
   const queryClient = useQueryClient();
   const { data: me } = useMe();

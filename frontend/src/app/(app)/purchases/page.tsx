@@ -22,6 +22,7 @@ import { purchaseOut, supplierOut, materialOut, type PurchaseOut, type SupplierO
 import { useListQuery } from '@/lib/useListQuery';
 import { dateFmt, qtyFmt, enumLabel, EM_DASH } from '@/lib/fmt';
 import { monoFamily } from '@/lib/theme';
+import { usePageTitle } from '@/lib/usePageTitle';
 import { PageHeader } from '@/components/PageHeader';
 import { DataTable } from '@/components/DataTable';
 import { MoneyText } from '@/components/MoneyText';
@@ -29,6 +30,7 @@ import { EmptyState } from '@/components/EmptyState';
 import { PurchaseForm } from '@/components/PurchaseForm';
 
 export default function PurchasesPage() {
+  usePageTitle('Purchases');
   const [paginationModel, setPaginationModel] = useState<GridPaginationModel>({ page: 0, pageSize: 10 });
   const [supplierFilter, setSupplierFilter] = useState<SupplierOut | null>(null);
   const [fromDate, setFromDate] = useState('');

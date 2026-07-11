@@ -10,6 +10,7 @@ import { saleOut, customerOut, type SaleOut, type CustomerOut } from '@gym/share
 import { useListQuery } from '@/lib/useListQuery';
 import { dateFmt, EM_DASH } from '@/lib/fmt';
 import { monoFamily } from '@/lib/theme';
+import { usePageTitle } from '@/lib/usePageTitle';
 import { PageHeader } from '@/components/PageHeader';
 import { DataTable } from '@/components/DataTable';
 import { MoneyText } from '@/components/MoneyText';
@@ -18,6 +19,7 @@ import { SaleEntry } from '@/components/SaleEntry';
 import { SaleDetailDialog } from '@/components/SaleDetailDialog';
 
 export default function SalesPage() {
+  usePageTitle('Sales');
   const [paginationModel, setPaginationModel] = useState<GridPaginationModel>({ page: 0, pageSize: 10 });
   const [customerFilter, setCustomerFilter] = useState<CustomerOut | null>(null);
   const [fromDate, setFromDate] = useState('');

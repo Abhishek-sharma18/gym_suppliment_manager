@@ -21,6 +21,7 @@ import { postJson, patchJson, deleteJson, ApiClientError } from '@/lib/api';
 import { useListQuery } from '@/lib/useListQuery';
 import { useExpenseRangeTotal } from '@/lib/useExpenseRangeTotal';
 import { localDateValue, dateFmt, enumLabel, EM_DASH } from '@/lib/fmt';
+import { usePageTitle } from '@/lib/usePageTitle';
 import { PageHeader } from '@/components/PageHeader';
 import { DataTable } from '@/components/DataTable';
 import { MoneyText } from '@/components/MoneyText';
@@ -58,6 +59,7 @@ const toPayload = (input: ExpenseFormState) => ({
 });
 
 export default function ExpensesPage() {
+  usePageTitle('Expenses');
   const notify = useNotify();
   const queryClient = useQueryClient();
 

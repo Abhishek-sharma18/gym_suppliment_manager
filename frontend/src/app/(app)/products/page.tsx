@@ -22,6 +22,7 @@ import { useDebouncedValue } from '@/lib/useDebouncedValue';
 import { useMe } from '@/lib/auth';
 import { qtyFmt } from '@/lib/fmt';
 import { monoFamily } from '@/lib/theme';
+import { usePageTitle } from '@/lib/usePageTitle';
 import { PageHeader } from '@/components/PageHeader';
 import { DataTable } from '@/components/DataTable';
 import { MoneyText } from '@/components/MoneyText';
@@ -74,6 +75,7 @@ const toPayload = (input: ProductFormState) => ({
 });
 
 export default function ProductsPage() {
+  usePageTitle('Products');
   const notify = useNotify();
   const queryClient = useQueryClient();
   const { data: me } = useMe();

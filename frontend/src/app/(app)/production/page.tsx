@@ -22,6 +22,7 @@ import { productionOut, productOut, materialOut, type ProductionOut, type Produc
 import { useListQuery } from '@/lib/useListQuery';
 import { dateFmt, qtyFmt, EM_DASH } from '@/lib/fmt';
 import { monoFamily } from '@/lib/theme';
+import { usePageTitle } from '@/lib/usePageTitle';
 import { PageHeader } from '@/components/PageHeader';
 import { DataTable } from '@/components/DataTable';
 import { MoneyText } from '@/components/MoneyText';
@@ -42,6 +43,7 @@ function expiryChip(expiryDate: Date | undefined) {
 }
 
 export default function ProductionPage() {
+  usePageTitle('Production');
   const [paginationModel, setPaginationModel] = useState<GridPaginationModel>({ page: 0, pageSize: 10 });
   const [productFilter, setProductFilter] = useState<ProductOut | null>(null);
   const [fromDate, setFromDate] = useState('');

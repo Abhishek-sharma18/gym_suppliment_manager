@@ -17,6 +17,7 @@ import { useMe } from '@/lib/auth';
 import { useProfit, useStockValue, useUdhaarReport, useSalesSummary } from '@/lib/useReports';
 import { enumLabel, inr, localDateValue, monthValue, EM_DASH } from '@/lib/fmt';
 import { monoFamily } from '@/lib/theme';
+import { usePageTitle } from '@/lib/usePageTitle';
 import { PageHeader } from '@/components/PageHeader';
 import { MoneyText } from '@/components/MoneyText';
 import { EmptyState } from '@/components/EmptyState';
@@ -281,6 +282,7 @@ function SalesSummarySection() {
 }
 
 export default function ReportsPage() {
+  usePageTitle('Reports');
   const { data: me } = useMe();
   const isAdmin = me?.role === 'admin';
 
