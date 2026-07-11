@@ -24,7 +24,7 @@ import {
 } from '@gym/shared';
 import { postJson } from '@/lib/api';
 import { useListQuery } from '@/lib/useListQuery';
-import { qtyFmt, EM_DASH } from '@/lib/fmt';
+import { qtyFmt, localDateValue, EM_DASH } from '@/lib/fmt';
 import { monoFamily } from '@/lib/theme';
 import { FormDialog } from './FormDialog';
 import { useNotify } from './SnackbarProvider';
@@ -37,7 +37,8 @@ interface ConsumptionRowState {
   fromBom: boolean;
 }
 
-const todayValue = (): string => new Date().toISOString().slice(0, 10);
+// Local day, not the UTC day — toISOString() defaults to YESTERDAY before 05:30 IST.
+const todayValue = (): string => localDateValue(new Date());
 const round2 = (n: number): number => Math.round(n * 100) / 100;
 const emptyExtraRow = (): ConsumptionRowState => ({ materialId: '', actualQty: '', wastageQty: '0', fromBom: false });
 

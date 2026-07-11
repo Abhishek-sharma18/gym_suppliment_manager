@@ -27,6 +27,7 @@ import {
 } from '@gym/shared';
 import { postJson } from '@/lib/api';
 import { useListQuery } from '@/lib/useListQuery';
+import { localDateValue } from '@/lib/fmt';
 import { FormDialog } from './FormDialog';
 import { MoneyText } from './MoneyText';
 import { useNotify } from './SnackbarProvider';
@@ -38,7 +39,8 @@ interface PurchaseLineState {
 }
 
 const emptyLine = (): PurchaseLineState => ({ materialId: '', qtyBuyUnit: '', costPerBuyUnit: '' });
-const todayValue = (): string => new Date().toISOString().slice(0, 10);
+// Local day, not the UTC day — toISOString() defaults to YESTERDAY before 05:30 IST.
+const todayValue = (): string => localDateValue(new Date());
 
 export interface PurchaseFormProps {
   open: boolean;

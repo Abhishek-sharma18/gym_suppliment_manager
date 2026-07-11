@@ -13,6 +13,7 @@ import Autocomplete from '@mui/material/Autocomplete';
 import IconButton from '@mui/material/IconButton';
 import Button from '@mui/material/Button';
 import Alert from '@mui/material/Alert';
+import FormHelperText from '@mui/material/FormHelperText';
 import Divider from '@mui/material/Divider';
 import ToggleButton from '@mui/material/ToggleButton';
 import ToggleButtonGroup from '@mui/material/ToggleButtonGroup';
@@ -33,6 +34,7 @@ import { postJson, ApiClientError } from '@/lib/api';
 import { useListQuery } from '@/lib/useListQuery';
 import { useDebouncedValue } from '@/lib/useDebouncedValue';
 import { zodErrorToFields } from '@/lib/zodFields';
+import { localDateValue } from '@/lib/fmt';
 import { monoFamily } from '@/lib/theme';
 import { MoneyText } from './MoneyText';
 import { useNotify } from './SnackbarProvider';
@@ -50,7 +52,6 @@ interface FormErrorState {
 }
 
 const round2 = (n: number): number => Math.round(n * 100) / 100;
-const todayValue = (): string => new Date().toISOString().slice(0, 10);
 const STEPPER_SX = { width: 40, height: 40 };
 
 /**
@@ -73,13 +74,22 @@ export function SaleEntry() {
     limit: 20,
   });
 
-  const { rows: customers, isLoading: customersLoading } = useListQuery('customers', customerOut, { limit: 100 });
+  // Server-searched, like the product field above — a fixed { limit: 100 } page would make
+  // customer #101 unreachable for udhaar sales.
+  const [customerSearch, setCustomerSearch] = useState('');
+  const debouncedCustomerSearch = useDebouncedValue(customerSearch);
+  const { rows: customerResults, isLoading: customersLoading } = useListQuery('customers', customerOut, {
+    search: debouncedCustomerSearch || undefined,
+    limit: 20,
+  });
 
   const [cart, setCart] = useState<CartLine[]>([]);
   const [discount, setDiscount] = useState('0');
   const [paymentMode, setPaymentMode] = useState<PaymentMode>('CASH');
   const [amountPaid, setAmountPaid] = useState('');
-  const [customerId, setCustomerId] = useState('');
+  // The full object, not just the id: with server-side search the current results page may
+  // no longer contain the selection, so it can't be re-derived from the options list.
+  const [customer, setCustomer] = useState<CustomerOut | null>(null);
   const [error, setError] = useState<FormErrorState | null>(null);
 
   const fieldError = (name: string): string | undefined => error?.fields?.[name];
@@ -89,7 +99,8 @@ export function SaleEntry() {
     setDiscount('0');
     setPaymentMode('CASH');
     setAmountPaid('');
-    setCustomerId('');
+    setCustomer(null);
+    setCustomerSearch('');
     setProductSearch('');
     setError(null);
   };
@@ -115,14 +126,18 @@ export function SaleEntry() {
   const total = round2(subtotal - discountNum);
   const paidNum = Number(amountPaid) || 0;
   const udhaar = Math.max(0, round2(total - paidNum));
-  const requiresCustomer = udhaar > 0 && !customerId;
-  const selectedCustomer = customers.find((c) => c._id === customerId) ?? null;
+  const requiresCustomer = udhaar > 0 && !customer;
+  // Keep the selection visible in the dropdown even when the current search page no longer includes it.
+  const customerOptions =
+    customer && !customerResults.some((c) => c._id === customer._id)
+      ? [customer, ...customerResults]
+      : customerResults;
 
   const recordSale = useMutation({
     mutationFn: async () => {
       const payload = saleCreate.parse({
-        customerId: customerId || undefined,
-        date: todayValue(),
+        customerId: customer?._id,
+        date: localDateValue(new Date()),
         paymentMode,
         discount: discountNum,
         amountPaid: paidNum,
@@ -329,20 +344,23 @@ export function SaleEntry() {
                 </Typography>
                 <MoneyText value={udhaar} udhaar={udhaar > 0} />
               </Stack>
-              {udhaar > 0 && (
+              {udhaar > 0 ? (
                 <Autocomplete<CustomerOut>
-                  options={customers}
+                  options={customerOptions}
                   loading={customersLoading}
-                  value={selectedCustomer}
+                  value={customer}
+                  inputValue={customerSearch}
+                  onInputChange={(_e, v) => setCustomerSearch(v)}
+                  filterOptions={(x) => x}
                   getOptionLabel={(c) => c.name}
                   isOptionEqualToValue={(a, b) => a._id === b._id}
-                  onChange={(_e, v) => setCustomerId(v?._id ?? '')}
+                  onChange={(_e, v) => setCustomer(v)}
                   sx={{ mt: 1 }}
                   renderInput={(params) => (
                     <TextField
                       {...params}
                       label="Customer"
-                      placeholder="Choose a customer"
+                      placeholder="Search customers"
                       error={Boolean(fieldError('customerId')) || requiresCustomer}
                       helperText={
                         fieldError('customerId') ??
@@ -351,6 +369,11 @@ export function SaleEntry() {
                     />
                   )}
                 />
+              ) : (
+                // The server's customerId refine can still fail while the Autocomplete is
+                // unmounted (client udhaar computed 0 inside the EPS window) — don't let
+                // that field error vanish invisibly.
+                fieldError('customerId') && <FormHelperText error>{fieldError('customerId')}</FormHelperText>
               )}
             </Box>
 
