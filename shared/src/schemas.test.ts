@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { ITEM_KINDS, MOVEMENT_TYPES, ROLES } from './enums';
 import { listQuery, objectId } from './common';
+import { materialCreate } from './materials';
+import { productCreate } from './products';
 
 describe('enums', () => {
   it('defines the exact role and movement sets from the spec', () => {
@@ -21,5 +23,18 @@ describe('common', () => {
   it('listQuery coerces strings and applies defaults', () => {
     expect(listQuery.parse({})).toEqual({ page: 1, limit: 20 });
     expect(listQuery.parse({ page: '3', limit: '50' })).toMatchObject({ page: 3, limit: 50 });
+  });
+});
+
+describe('master data', () => {
+  it('material rejects non-positive conversionFactor', () => {
+    const base = { name: 'Whey', buyUnit: 'kg', useUnit: 'g', conversionFactor: 0 };
+    expect(materialCreate.safeParse(base).success).toBe(false);
+    expect(materialCreate.safeParse({ ...base, conversionFactor: 1000 }).success).toBe(true);
+  });
+  it('product defaults bom to [] and packagingCost to 0', () => {
+    const p = productCreate.parse({ name: 'Protein Jar 1kg', sellingPrice: 2500 });
+    expect(p.bom).toEqual([]);
+    expect(p.packagingCostPerUnit).toBe(0);
   });
 });
