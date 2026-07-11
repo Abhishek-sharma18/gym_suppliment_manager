@@ -9,7 +9,7 @@ import {
   type GridValidRowModel,
 } from '@mui/x-data-grid';
 
-export interface DataTableProps<T extends GridValidRowModel> {
+export interface DataTableProps<T extends GridValidRowModel & { _id: string }> {
   rows: T[];
   columns: GridColDef<T>[];
   rowCount: number;
@@ -24,7 +24,7 @@ export interface DataTableProps<T extends GridValidRowModel> {
  * Thin server-mode wrapper around @mui/x-data-grid. Dense by default; horizontal scroll
  * kicks in on narrow viewports once column minWidths (set by callers) exceed the container.
  */
-export function DataTable<T extends GridValidRowModel & { _id?: string }>({
+export function DataTable<T extends GridValidRowModel & { _id: string }>({
   rows,
   columns,
   rowCount,
@@ -34,13 +34,11 @@ export function DataTable<T extends GridValidRowModel & { _id?: string }>({
   onRowClick,
   getRowId,
 }: DataTableProps<T>) {
-  const resolveRowId = (row: T): string => (getRowId ? getRowId(row) : ((row as { _id: string })._id));
-
   return (
     <Box sx={{ width: '100%', overflowX: 'auto' }}>
-      <DataGrid
-        rows={rows as unknown as GridValidRowModel[]}
-        columns={columns as unknown as GridColDef[]}
+      <DataGrid<T>
+        rows={rows}
+        columns={columns}
         rowCount={rowCount}
         paginationModel={paginationModel}
         onPaginationModelChange={onPaginationModelChange}
@@ -50,8 +48,8 @@ export function DataTable<T extends GridValidRowModel & { _id?: string }>({
         density="compact"
         disableRowSelectionOnClick
         autoHeight
-        getRowId={(row) => resolveRowId(row as T)}
-        onRowClick={onRowClick ? (params: GridRowParams) => onRowClick(params.row as T) : undefined}
+        getRowId={getRowId ?? ((row) => row._id)}
+        onRowClick={onRowClick ? (params: GridRowParams<T>) => onRowClick(params.row) : undefined}
         sx={{
           minWidth: 0,
           bgcolor: 'background.paper',
