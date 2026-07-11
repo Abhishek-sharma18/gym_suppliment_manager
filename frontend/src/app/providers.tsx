@@ -6,6 +6,7 @@ import { ThemeProvider } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
 import { AppRouterCacheProvider } from '@mui/material-nextjs/v16-appRouter';
 import { theme } from '@/lib/theme';
+import { SnackbarProvider } from '@/components/SnackbarProvider';
 
 export function Providers({ children }: { children: ReactNode }) {
   const [queryClient] = useState(
@@ -15,7 +16,9 @@ export function Providers({ children }: { children: ReactNode }) {
     <AppRouterCacheProvider>
       <ThemeProvider theme={theme}>
         <CssBaseline />
-        <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+        <QueryClientProvider client={queryClient}>
+          <SnackbarProvider>{children}</SnackbarProvider>
+        </QueryClientProvider>
       </ThemeProvider>
     </AppRouterCacheProvider>
   );
