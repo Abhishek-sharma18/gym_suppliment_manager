@@ -342,7 +342,11 @@ export default function ProductsPage() {
               slotProps={{ htmlInput: { min: 0, step: 'any' } }}
               fullWidth
             />
-            <BomEditor value={form.bom} onChange={(bom) => setForm((f) => ({ ...f, bom }))} />
+            <BomEditor
+              value={form.bom}
+              onChange={(bom) => setForm((f) => ({ ...f, bom }))}
+              fieldError={fieldError}
+            />
             {form.bom.length === 0 && (
               <Alert severity="info">Without a recipe this product cannot be produced.</Alert>
             )}

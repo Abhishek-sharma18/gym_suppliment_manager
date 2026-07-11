@@ -7,6 +7,7 @@ import Autocomplete from '@mui/material/Autocomplete';
 import IconButton from '@mui/material/IconButton';
 import Button from '@mui/material/Button';
 import Typography from '@mui/material/Typography';
+import FormHelperText from '@mui/material/FormHelperText';
 import AddOutlinedIcon from '@mui/icons-material/AddOutlined';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutlineOutlined';
 import { materialOut, type MaterialOut } from '@gym/shared';
@@ -20,6 +21,12 @@ export interface BomLineValue {
 export interface BomEditorProps {
   value: BomLineValue[];
   onChange: (value: BomLineValue[]) => void;
+  /**
+   * Per-field validation lookup (FormDialog's fieldError render prop). Keys follow
+   * zodErrorToFields paths: "bom" for array-level issues, "bom.{i}.materialId" and
+   * "bom.{i}.qtyPerUnit" for row-level ones.
+   */
+  fieldError?: (name: string) => string | undefined;
 }
 
 /**
@@ -27,9 +34,9 @@ export interface BomEditorProps {
  * picks a raw material (options fetched from /materials) and the quantity, in that
  * material's useUnit, consumed to make 1 finished unit. A material already used by
  * another row is disabled in that row's options so the same ingredient can't be listed
- * twice.
+ * twice. Validation messages for "bom.*" paths surface on the offending row's inputs.
  */
-export function BomEditor({ value, onChange }: BomEditorProps) {
+export function BomEditor({ value, onChange, fieldError }: BomEditorProps) {
   const { rows: materials, isLoading } = useListQuery('materials', materialOut, { limit: 100 });
 
   const updateRow = (index: number, patch: Partial<BomLineValue>) => {
@@ -44,14 +51,23 @@ export function BomEditor({ value, onChange }: BomEditorProps) {
     onChange([...value, { materialId: '', qtyPerUnit: 0 }]);
   };
 
+  const bomError = fieldError?.('bom');
+
   return (
     <Box>
       <Typography variant="subtitle2" sx={{ mb: 1 }}>
         Recipe (bill of materials)
       </Typography>
+      {bomError && (
+        <FormHelperText error sx={{ mb: 1 }}>
+          {bomError}
+        </FormHelperText>
+      )}
       <Stack spacing={1.5}>
         {value.map((row, index) => {
           const selected = materials.find((m) => m._id === row.materialId) ?? null;
+          const materialError = fieldError?.(`bom.${index}.materialId`);
+          const qtyError = fieldError?.(`bom.${index}.qtyPerUnit`);
           return (
             <Stack key={index} direction="row" spacing={1} sx={{ alignItems: 'flex-start' }}>
               <Autocomplete<MaterialOut>
@@ -63,7 +79,15 @@ export function BomEditor({ value, onChange }: BomEditorProps) {
                 getOptionDisabled={(m) => value.some((r, i) => i !== index && r.materialId === m._id)}
                 onChange={(_e, newValue) => updateRow(index, { materialId: newValue?._id ?? '' })}
                 sx={{ flex: 1 }}
-                renderInput={(params) => <TextField {...params} label="Material" placeholder="Choose a material" />}
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    label="Material"
+                    placeholder="Choose a material"
+                    error={Boolean(materialError)}
+                    helperText={materialError}
+                  />
+                )}
               />
               <TextField
                 label="Quantity"
@@ -72,7 +96,8 @@ export function BomEditor({ value, onChange }: BomEditorProps) {
                 onChange={(e) =>
                   updateRow(index, { qtyPerUnit: e.target.value === '' ? 0 : Number(e.target.value) })
                 }
-                helperText="per 1 unit made"
+                error={Boolean(qtyError)}
+                helperText={qtyError ?? 'per 1 unit made'}
                 slotProps={{ htmlInput: { min: 0, step: 'any' } }}
                 sx={{ width: 160 }}
               />
