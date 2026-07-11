@@ -20,6 +20,8 @@ export interface ISale {
     udhaarReduced?: number;
     createdBy?: Types.ObjectId;
   }[];
+  createdBy?: Types.ObjectId;
+  updatedBy?: Types.ObjectId;
 }
 
 const schema = new Schema<ISale>({

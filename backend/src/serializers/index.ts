@@ -53,6 +53,17 @@ export function serializePurchase(doc: AnyDoc, role: Role): Record<string, unkno
   return o;
 }
 
+export function serializeSale(doc: AnyDoc, role: Role): Record<string, unknown> {
+  const o = baseDoc(doc);
+  if (role !== 'admin') {
+    o.items = (o.items as Record<string, unknown>[]).map((i) => {
+      const { unitCostAtSale, ...rest } = i;
+      return rest;
+    });
+  }
+  return o;
+}
+
 export function serializeProduction(doc: AnyDoc, role: Role): Record<string, unknown> {
   const o = baseDoc(doc);
   if (role !== 'admin') {

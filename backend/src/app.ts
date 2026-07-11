@@ -9,6 +9,7 @@ import { materialsRouter, productsRouter, suppliersRouter, customersRouter } fro
 import { movementsRouter } from './routes/movements';
 import { purchasesRouter } from './routes/purchases';
 import { productionRouter } from './routes/production';
+import { salesRouter } from './routes/sales';
 
 export function createApp(): express.Express {
   const app = express();
@@ -34,6 +35,7 @@ export function createApp(): express.Express {
   app.use('/api/movements', requireAuth, movementsRouter);
   app.use('/api/purchases', requireAuth, purchasesRouter);
   app.use('/api/production', requireAuth, productionRouter);
+  app.use('/api/sales', requireAuth, salesRouter);
 
   app.use((_req, res) => {
     res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Route not found' } });
