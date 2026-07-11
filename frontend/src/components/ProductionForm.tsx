@@ -87,11 +87,15 @@ export function ProductionForm({ open, onClose }: ProductionFormProps) {
   // Re-seed the BoM-derived rows whenever the product or the batch size changes — this is
   // the "on product/qty change PREFILL" rule. Adjusted during render (not a useEffect), same
   // convention as the pagination-reset-on-filter-change pattern used by the list pages.
+  // Extra (manually added) rows survive the re-seed EXCEPT when the incoming recipe already
+  // contains that material — keeping both would submit duplicate materialId lines, which the
+  // backend accepts and posts as double consumption.
   const prefillKey = `${productId}|${qtyProduced}`;
   if (prefillKey !== prevPrefillKey) {
     setPrevPrefillKey(prefillKey);
     setRows((rs) => {
-      const extra = rs.filter((r) => !r.fromBom);
+      const bomIds = new Set((selectedProduct?.bom ?? []).map((line) => line.materialId));
+      const extra = rs.filter((r) => !r.fromBom && !bomIds.has(r.materialId));
       const bomRows: ConsumptionRowState[] = (selectedProduct?.bom ?? []).map((line) => {
         const planned = round2(line.qtyPerUnit * qtyNum);
         return { materialId: line.materialId, actualQty: String(planned), wastageQty: '0', fromBom: true };
@@ -105,6 +109,12 @@ export function ProductionForm({ open, onClose }: ProductionFormProps) {
   };
   const removeRow = (index: number) => setRows((rs) => rs.filter((_, i) => i !== index));
   const addExtraRow = () => setRows((rs) => [...rs, emptyExtraRow()]);
+
+  // Defensive: a duplicate materialId across rows would post double consumption on the
+  // backend. The re-seed dedup and getOptionDisabled should prevent this, but block submit
+  // outright if one slips through.
+  const pickedIds = rows.map((r) => r.materialId).filter((id) => id !== '');
+  const hasDuplicateMaterials = new Set(pickedIds).size !== pickedIds.length;
 
   const recordBatch = useMutation({
     mutationFn: () =>
@@ -143,6 +153,7 @@ export function ProductionForm({ open, onClose }: ProductionFormProps) {
       maxWidth="md"
       fullScreenOnMobile
       pending={recordBatch.isPending}
+      submitDisabled={hasDuplicateMaterials}
       onClose={() => {
         if (recordBatch.isPending) return;
         reset();
@@ -328,6 +339,11 @@ export function ProductionForm({ open, onClose }: ProductionFormProps) {
                   );
                 })}
               </Stack>
+            )}
+            {hasDuplicateMaterials && (
+              <Alert severity="warning" sx={{ mt: 1.5 }}>
+                The same material appears on more than one line — remove the duplicate before recording.
+              </Alert>
             )}
             <Button startIcon={<AddOutlinedIcon />} onClick={addExtraRow} sx={{ mt: 1.5 }}>
               Add material

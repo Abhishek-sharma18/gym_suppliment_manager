@@ -32,6 +32,8 @@ export interface FormDialogProps {
   onSubmit: () => Promise<void>;
   submitLabel?: string;
   pending?: boolean;
+  /** Blocks submission for form states the inputs themselves can't express as a field error (e.g. duplicate rows). */
+  submitDisabled?: boolean;
   /** Dialog width breakpoint (default 'sm'). Wider forms — e.g. multi-line row editors — can request 'md'. */
   maxWidth?: 'xs' | 'sm' | 'md' | 'lg' | 'xl';
   /** Goes edge-to-edge below the 'sm' breakpoint instead of a small centered modal — for forms too tall/wide for a phone screen. */
@@ -52,6 +54,7 @@ export function FormDialog({
   onSubmit,
   submitLabel = 'Save',
   pending,
+  submitDisabled = false,
   maxWidth = 'sm',
   fullScreenOnMobile = false,
   children,
@@ -99,7 +102,7 @@ export function FormDialog({
           <Button onClick={handleClose} disabled={pending}>
             Cancel
           </Button>
-          <Button type="submit" variant="contained" disabled={pending}>
+          <Button type="submit" variant="contained" disabled={pending || submitDisabled}>
             {pending ? 'Saving…' : submitLabel}
           </Button>
         </DialogActions>
