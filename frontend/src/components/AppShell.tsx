@@ -15,6 +15,8 @@ import IconButton from '@mui/material/IconButton';
 import Chip from '@mui/material/Chip';
 import CircularProgress from '@mui/material/CircularProgress';
 import Divider from '@mui/material/Divider';
+import Button from '@mui/material/Button';
+import Stack from '@mui/material/Stack';
 import MenuIcon from '@mui/icons-material/Menu';
 import LogoutIcon from '@mui/icons-material/Logout';
 import SpaceDashboardOutlinedIcon from '@mui/icons-material/SpaceDashboardOutlined';
@@ -29,6 +31,7 @@ import PaymentsOutlinedIcon from '@mui/icons-material/PaymentsOutlined';
 import AssessmentOutlinedIcon from '@mui/icons-material/AssessmentOutlined';
 import ManageAccountsOutlinedIcon from '@mui/icons-material/ManageAccountsOutlined';
 import { useMe, useLogout } from '@/lib/auth';
+import { ApiClientError } from '@/lib/api';
 
 const DRAWER_WIDTH = 232;
 
@@ -61,13 +64,15 @@ function isActive(pathname: string, href: string): boolean {
 export function AppShell({ children }: { children: ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
-  const { data: me, isLoading, isError } = useMe();
+  const { data: me, isLoading, isError, error, refetch } = useMe();
   const logout = useLogout();
   const [mobileOpen, setMobileOpen] = useState(false);
 
+  const unauthenticated = error instanceof ApiClientError && error.status === 401;
+
   useEffect(() => {
-    if (isError) router.replace('/login');
-  }, [isError, router]);
+    if (unauthenticated) router.replace('/login');
+  }, [unauthenticated, router]);
 
   const navItems = useMemo(
     () => NAV_ITEMS.filter((item) => !item.adminOnly || me?.role === 'admin'),
@@ -87,13 +92,30 @@ export function AppShell({ children }: { children: ReactNode }) {
     );
   }
 
-  if (isError || !me) {
+  if (isError) {
+    if (unauthenticated) return null;
+    return (
+      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh' }}>
+        <Stack spacing={2} sx={{ alignItems: 'center' }}>
+          <Typography color="text.secondary">Can&apos;t reach the server.</Typography>
+          <Button variant="outlined" onClick={() => refetch()}>
+            Retry
+          </Button>
+        </Stack>
+      </Box>
+    );
+  }
+
+  if (!me) {
     return null;
   }
 
   const handleLogout = async () => {
-    await logout.mutateAsync();
-    router.replace('/login');
+    try {
+      await logout.mutateAsync();
+    } finally {
+      router.replace('/login');
+    }
   };
 
   const drawerContent = (

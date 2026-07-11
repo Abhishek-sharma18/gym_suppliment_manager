@@ -454,3 +454,19 @@ Move the dashboard placeholder to `frontend/src/app/(app)/page.tsx` ('use client
 - Task 1's brief is verbatim; Tasks 2-10 briefs carry contracts + acceptance criteria — reviewers gate on acceptance lists and the Design tokens section (visual identity is a binding constraint: mono money, khata rule on totals, sentence-case copy, conditional rendering on absent fields).
 - The API must NOT be assumed running during Tasks 1-9 verification (build + unit tests only). Task 10 boots the full stack.
 - Phase 2 (after this branch): browser click-through of every flow against seeded data, fixing integration drift, then project completion review.
+
+---
+
+## Post-review amendments (2026-07-12, final whole-branch review)
+
+Fixed before merge: AppShell now redirects to /login only on 401 (other errors show an inline retry state); SaleEntry's product search no longer client-filters server results (SKU search works); ConfirmDialog/logout no longer produce unhandled rejections.
+
+### Phase 2 tickets (explicitly deferred)
+- limit-100 lookup seam: convert the sales-page customer filter and ProductionForm product picker to debounced server search; consider a "showing first N" warning in fixed-limit lookups (BomEditor, PurchaseForm, detail-dialog name maps).
+- Server-side self-demotion guard (PATCH self role change to staff -> 400), mirroring SELF_DEACTIVATE.
+- enumLabel acronym sweep (UPI etc.) + use it in the payment-mode ToggleButtonGroups.
+- Filtered-empty EmptyState copy ("No matches for these filters" vs first-use copy).
+- Staff-visible all-em-dash cost column headers: hide columns when no row carries the field.
+- Take-payment button disabled until customer detail loads; index-keyed row-error staleness after add/remove; reports invalidation on transactional mutations if reports ever embed on those pages.
+
+### Spec deviation (recorded): spec Sec 9 says admin-only pages "redirect staff away"; the implementation renders an inline 403 state instead (equal protection - the API 403s everything; better UX). Accepted.

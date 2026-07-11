@@ -110,7 +110,7 @@ One MUI layout shell (AppBar + responsive Drawer), role-filtered navigation, mob
 
 Pages: **Login** → **Dashboard** (admin: today's sales ₹, stock value, low-stock, expiring-soon, udhaar outstanding; staff: stock/entry KPIs only) → **Sales** (fastest screen: product search, qty steppers, running total, payment split, minimal taps) → **Production** (pick product + batch size → BoM auto-fills consumption, editable actuals + wastage) → **Purchases** → **Materials** → **Products & recipes (BoM editor)** → **Customers / udhaar ledger** → **Expenses** (admin) → **Reports** (admin sees money; staff sees stock) → **Users** (admin).
 
-Route guard: `/api/auth/me` check in the shell; unauthenticated → login; admin-only pages redirect staff away.
+Route guard: `/api/auth/me` check in the shell; unauthenticated → login; admin-only pages redirect staff away. (Implementation note: admin-only pages render an inline 403 state rather than redirecting - accepted deviation, 2026-07-12.)
 
 ## 10. Testing & seed
 

@@ -27,6 +27,8 @@ export function ConfirmDialog({ open, title, body, confirmLabel, danger, onConfi
     setPending(true);
     try {
       await onConfirm();
+    } catch {
+      // Swallowed: callers already surface errors via their own onError snackbars.
     } finally {
       setPending(false);
     }

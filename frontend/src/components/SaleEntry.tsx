@@ -197,6 +197,7 @@ export function SaleEntry() {
               value={null}
               inputValue={productSearch}
               onInputChange={(_e, v) => setProductSearch(v)}
+              filterOptions={(x) => x}
               getOptionLabel={(p) => (p.variant ? `${p.name} (${p.variant})` : p.name)}
               isOptionEqualToValue={(a, b) => a._id === b._id}
               onChange={(_e, v) => {
