@@ -44,12 +44,12 @@ All docs carry audit fields `createdBy`, `updatedBy` (user ids) and timestamps. 
 
 - **users** — name, email (unique), passwordHash, role: `admin | staff`, isActive.
 - **raw_materials** — name, buyUnit (e.g. kg, box), useUnit (e.g. g, piece), conversionFactor (1 buyUnit = N useUnit), reorderLevel (useUnit), **currentQty** (useUnit, cached), **avgCost** (₹ per useUnit, cached moving weighted average), isDeleted.
-- **products** — name, variant/size label, sku, sellingPrice, packagingCostPerUnit, `bom[]`: `{ materialId, qtyPerUnit (useUnit) }`, reorderLevel, **currentQty** (cached), isDeleted.
+- **products** — name, variant/size label, sku, sellingPrice, packagingCostPerUnit, `bom[]`: `{ materialId, qtyPerUnit (useUnit) }`, reorderLevel, **currentQty** (cached), **avgUnitCost** (₹, cached moving weighted average across production batches; admin-only field), isDeleted.
 - **suppliers** — name, phone, address, notes, isDeleted.
 - **customers** — name, phone, **udhaarBalance** (cached ₹ outstanding), isDeleted.
 - **purchases** — supplierId, invoiceNo?, date, items[]: `{ materialId, qtyBuyUnit, costPerBuyUnit, lineTotal }`, totalAmount, paymentMode.
 - **production_batches** — batchNo (auto `B-YYYYMMDD-<seq>`), productId, qtyProduced, date, expiryDate?, materialsConsumed[]: `{ materialId, plannedQty, actualQty, wastageQty, costPerUseUnit }`, **costSnapshot**: `{ materialCost, packagingCost, totalCost, unitCost }`.
-- **sales** — invoiceNo (auto `S-YYYYMMDD-<seq>`), customerId? (required if udhaar > 0), date, items[]: `{ productId, qty, unitPrice (prefilled from product, editable), lineTotal }`, subtotal, discount, total, paymentMode: `CASH | UPI | CARD`, amountPaid, udhaarAmount.
+- **sales** — invoiceNo (auto `S-YYYYMMDD-<seq>`), customerId? (required if udhaar > 0), date, items[]: `{ productId, qty, unitPrice (prefilled from product, editable), unitCostAtSale (snapshot of product avgUnitCost; stripped for staff), lineTotal }`, subtotal, discount, total, paymentMode: `CASH | UPI | CARD`, amountPaid, udhaarAmount.
 - **payments** — customerId, amount, date, mode, notes (settles udhaar; reduces `udhaarBalance`).
 - **expenses** — category: `RENT | SALARY | ELECTRICITY | TRANSPORT | PACKAGING | OTHER`, amount, date, notes. Admin only.
 - **stock_movements** — the ledger. `{ type, itemKind: RAW | FINISHED, itemId, qty (signed: + in, − out), unitCost?, refType, refId, note?, createdBy, createdAt }`. **Immutable.**
@@ -67,17 +67,18 @@ All docs carry audit fields `createdBy`, `updatedBy` (user ids) and timestamps. 
 ### Transactional flows
 
 - **Purchase create:** per line → `PURCHASE_IN` (qty converted to useUnit) + update material `avgCost` via moving weighted average: `newAvg = (currentQty*avgCost + inQty*inUnitCost) / (currentQty + inQty)` (guard division by zero; cost per useUnit = costPerBuyUnit / conversionFactor).
-- **Production create:** BoM × batch size prefills `plannedQty`; user edits `actualQty` and `wastageQty`. Movements: `PRODUCTION_CONSUME` (−actualQty) and `WASTAGE` (−wastageQty) per material, `PRODUCTION_OUT` (+qtyProduced) for the product. Snapshot `materialCost = Σ(actual+wastage)×avgCost-at-time`, plus `packagingCost = packagingCostPerUnit × qtyProduced`; store `unitCost`.
+- **Production create:** BoM × batch size prefills `plannedQty`; user edits `actualQty` and `wastageQty`. Movements: `PRODUCTION_CONSUME` (−actualQty) and `WASTAGE` (−wastageQty) per material, `PRODUCTION_OUT` (+qtyProduced) for the product. Snapshot `materialCost = Σ(actual+wastage)×avgCost-at-time`, plus `packagingCost = packagingCostPerUnit × qtyProduced`; store `unitCost`. The product's cached `avgUnitCost` is updated with the same moving-weighted-average formula as materials (existing stock at old avg + new batch at batch unitCost).
 - **Sale create:** per item `SALE_OUT` (−qty); if `udhaarAmount > 0`, require customer and increase `udhaarBalance` in the same transaction.
-- **Sale return:** admin-only endpoint on a sale; restocks selected items via `SALE_RETURN_IN` and decreases the sale's udhaar/records refund note.
-- **Payment create:** decreases customer `udhaarBalance` (not below the effect of recorded docs; validation against current balance) in a transaction.
+- **Sale return:** admin-only endpoint on a sale; appends to an append-only `returns[]` array on the sale doc, restocks selected items via `SALE_RETURN_IN`, and reduces the customer's `udhaarBalance` (or records a refund note) in the same transaction. The original sale lines are never edited.
+- **Payment create:** decreases customer `udhaarBalance` in a transaction; amount must be > 0 and ≤ the customer's current `udhaarBalance`.
 
 ## 6. Costing & profit
 
 - Raw materials: moving weighted average, updated only on purchase (see above).
 - Batches: cost snapshot at production time — later price changes never rewrite history.
+- Finished goods: no batch-level FIFO tracking in v1 — each sale line snapshots `unitCostAtSale` from the product's cached `avgUnitCost` at the moment of sale, so profit history never shifts when later batches cost more or less.
 - Overhead: computed at **report time** = month's total expenses ÷ units produced that month.
-- Profit per sale item = unitPrice − (unit cost from the batch snapshot average for that product + overhead per unit for the sale's month). Reports show gross (before overhead) and net (after) so the math is transparent.
+- Profit per sale item = unitPrice − unitCostAtSale − overhead per unit for the sale's month. Reports show gross (before overhead) and net (after) so the math is transparent.
 
 ## 7. Auth & RBAC
 
