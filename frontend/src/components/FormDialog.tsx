@@ -9,6 +9,8 @@ import DialogActions from '@mui/material/DialogActions';
 import Button from '@mui/material/Button';
 import Alert from '@mui/material/Alert';
 import Stack from '@mui/material/Stack';
+import useMediaQuery from '@mui/material/useMediaQuery';
+import { useTheme } from '@mui/material/styles';
 import { ZodError } from 'zod';
 import { ApiClientError } from '@/lib/api';
 import { zodErrorToFields } from '@/lib/zodFields';
@@ -30,6 +32,10 @@ export interface FormDialogProps {
   onSubmit: () => Promise<void>;
   submitLabel?: string;
   pending?: boolean;
+  /** Dialog width breakpoint (default 'sm'). Wider forms — e.g. multi-line row editors — can request 'md'. */
+  maxWidth?: 'xs' | 'sm' | 'md' | 'lg' | 'xl';
+  /** Goes edge-to-edge below the 'sm' breakpoint instead of a small centered modal — for forms too tall/wide for a phone screen. */
+  fullScreenOnMobile?: boolean;
   children: (helpers: FormDialogRenderProps) => ReactNode;
 }
 
@@ -39,8 +45,21 @@ export interface FormDialogProps {
  * message in the Alert and per-field text via the fieldError(name) render prop, so
  * client-side schema.parse() failures behave exactly like server validation errors.
  */
-export function FormDialog({ open, title, onClose, onSubmit, submitLabel = 'Save', pending, children }: FormDialogProps) {
+export function FormDialog({
+  open,
+  title,
+  onClose,
+  onSubmit,
+  submitLabel = 'Save',
+  pending,
+  maxWidth = 'sm',
+  fullScreenOnMobile = false,
+  children,
+}: FormDialogProps) {
   const [error, setError] = useState<FormErrorState | null>(null);
+  const theme = useTheme();
+  const isMobileViewport = useMediaQuery(theme.breakpoints.down('sm'));
+  const fullScreen = fullScreenOnMobile && isMobileViewport;
 
   const fieldError = (name: string): string | undefined => error?.fields?.[name];
 
@@ -67,10 +86,10 @@ export function FormDialog({ open, title, onClose, onSubmit, submitLabel = 'Save
   };
 
   return (
-    <Dialog open={open} onClose={handleClose} fullWidth maxWidth="sm">
+    <Dialog open={open} onClose={handleClose} fullWidth maxWidth={maxWidth} fullScreen={fullScreen}>
       <DialogTitle>{title}</DialogTitle>
-      <Box component="form" onSubmit={handleSubmit}>
-        <DialogContent>
+      <Box component="form" onSubmit={handleSubmit} sx={fullScreen ? { display: 'flex', flexDirection: 'column', height: '100%' } : undefined}>
+        <DialogContent sx={fullScreen ? { flexGrow: 1 } : undefined}>
           <Stack spacing={2}>
             {error && <Alert severity="error">{error.message}</Alert>}
             {children({ fieldError })}
