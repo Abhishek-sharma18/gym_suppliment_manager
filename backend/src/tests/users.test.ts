@@ -45,6 +45,21 @@ describe('users admin CRUD', () => {
     expect((await admin.delete(`/api/users/${me.body.data._id}`)).status).toBe(400);
   });
 
+  it('admin cannot deactivate self via PATCH, but other self-edits still work', async () => {
+    const admin = await loginAgent(app, ADMIN);
+    const me = await admin.get('/api/auth/me');
+    const myId = me.body.data._id;
+
+    const blocked = await admin.patch(`/api/users/${myId}`).send({ isActive: false });
+    expect(blocked.status).toBe(400);
+    expect(blocked.body.error.code).toBe('SELF_DEACTIVATE');
+
+    const renamed = await admin.patch(`/api/users/${myId}`).send({ name: 'X' });
+    expect(renamed.status).toBe(200);
+    expect(renamed.body.data.name).toBe('X');
+    expect(renamed.body.data.isActive).toBe(true);
+  });
+
   it('creating a user with an email that already exists returns 409 DUPLICATE', async () => {
     const admin = await loginAgent(app, ADMIN);
     const res = await admin.post('/api/users').send({

@@ -339,15 +339,24 @@ export default function UsersPage() {
                 </MenuItem>
               ))}
             </TextField>
-            <FormControlLabel
-              control={
-                <Switch
-                  checked={editForm.isActive}
-                  onChange={(e) => setEditForm((f) => ({ ...f, isActive: e.target.checked }))}
+            <Tooltip
+              title={editTarget?._id === me?._id ? 'You cannot deactivate your own account' : ''}
+            >
+              {/* Same disabled-child caveat as the row button: span keeps the tooltip
+                  hoverable while the switch is disabled for the logged-in admin. */}
+              <span>
+                <FormControlLabel
+                  control={
+                    <Switch
+                      checked={editForm.isActive}
+                      disabled={editTarget?._id === me?._id}
+                      onChange={(e) => setEditForm((f) => ({ ...f, isActive: e.target.checked }))}
+                    />
+                  }
+                  label="Active"
                 />
-              }
-              label="Active"
-            />
+              </span>
+            </Tooltip>
             <TextField
               label="New password"
               type="password"

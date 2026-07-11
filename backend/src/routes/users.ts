@@ -33,6 +33,9 @@ usersRouter.get('/:id', async (req, res) => {
 });
 
 usersRouter.patch('/:id', validateBody(userUpdate), async (req, res) => {
+  if (req.params.id === String(res.locals.user._id) && res.locals.body.isActive === false) {
+    throw new ApiError(400, 'SELF_DEACTIVATE', 'You cannot deactivate your own account');
+  }
   const { password, ...rest } = res.locals.body;
   const update: Record<string, unknown> = { ...rest, updatedBy: res.locals.user._id };
   if (password) update.passwordHash = await bcrypt.hash(password, 10);
