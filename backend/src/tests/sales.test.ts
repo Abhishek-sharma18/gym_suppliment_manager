@@ -104,6 +104,63 @@ describe('sales', () => {
     })).status).toBe(400); // only 1 left un-returned
   });
 
+  it('return with duplicate productId lines gets 400 and persists nothing', async () => {
+    const { jar, customer } = await seedShop();
+    const staff = await loginAgent(app, STAFF);
+    const sale = await staff.post('/api/sales').send({
+      customerId: String(customer._id), date: '2026-07-11', paymentMode: 'CASH', amountPaid: 0,
+      items: [{ productId: String(jar._id), qty: 2, unitPrice: 2500 }],
+    });
+    const saleId = sale.body.data._id;
+
+    const admin = await loginAgent(app, ADMIN);
+    const ret = await admin.post(`/api/sales/${saleId}/return`).send({
+      items: [
+        { productId: String(jar._id), qty: 1 },
+        { productId: String(jar._id), qty: 1 },
+      ],
+    });
+    expect(ret.status).toBe(400);
+    expect(ret.body.error.code).toBe('DUPLICATE_LINES');
+    expect((await Product.findById(jar._id))!.currentQty).toBe(18); // unchanged since the sale
+    expect(await StockMovement.countDocuments({ type: 'SALE_RETURN_IN' })).toBe(0);
+    const fresh = await admin.get(`/api/sales/${saleId}`);
+    expect(fresh.body.data.returns).toHaveLength(0);
+  });
+
+  it('multi-line sale of the same product: return aggregates at the weighted average', async () => {
+    const { jar, customer } = await seedShop();
+    const staff = await loginAgent(app, STAFF);
+    const sale = await staff.post('/api/sales').send({
+      customerId: String(customer._id), date: '2026-07-11', paymentMode: 'CASH', amountPaid: 0,
+      items: [
+        { productId: String(jar._id), qty: 1, unitPrice: 2500 },
+        { productId: String(jar._id), qty: 1, unitPrice: 2000 },
+      ],
+    });
+    expect(sale.status).toBe(201);
+    const saleId = sale.body.data._id;
+    expect((await Customer.findById(customer._id))!.udhaarBalance).toBe(4500);
+
+    const admin = await loginAgent(app, ADMIN);
+
+    // 3 exceeds the 2 sold across both lines
+    const over = await admin.post(`/api/sales/${saleId}/return`).send({
+      items: [{ productId: String(jar._id), qty: 3 }],
+    });
+    expect(over.status).toBe(400);
+    expect(over.body.error.code).toBe('OVER_RETURN');
+
+    // returning both units values them at the weighted average (2250 each)
+    const ret = await admin.post(`/api/sales/${saleId}/return`).send({
+      items: [{ productId: String(jar._id), qty: 2 }],
+    });
+    expect(ret.status).toBe(200);
+    expect(ret.body.data.returns[0].udhaarReduced).toBe(4500); // 2 x 2250
+    expect((await Customer.findById(customer._id))!.udhaarBalance).toBe(0);
+    expect((await Product.findById(jar._id))!.currentQty).toBe(20);
+  });
+
   it('float rounding: 3 x 33.33 with full payment', async () => {
     const { jar } = await seedShop();
     const staff = await loginAgent(app, STAFF);

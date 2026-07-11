@@ -4,7 +4,7 @@ import type { z } from 'zod';
 import type { saleCreate, saleReturnCreate } from '@gym/shared';
 import { Customer, Product, Sale, type ISale } from '../models';
 import { ApiError } from '../lib/errors';
-import { round2 } from '../lib/round';
+import { round2, round4 } from '../lib/round';
 import { postMovement } from './ledger';
 import { nextSeq, yyyymmdd } from './counters';
 
@@ -62,27 +62,36 @@ export async function createSaleReturn(saleId: string, input: ReturnInput, userI
     const sale = await Sale.findById(saleId).session(session);
     if (!sale) throw new ApiError(404, 'NOT_FOUND', 'Sale not found');
 
+    const ids = input.items.map((i) => i.productId);
+    if (new Set(ids).size !== ids.length) {
+      throw new ApiError(400, 'DUPLICATE_LINES', 'Each product may appear only once in a return');
+    }
+
     let returnValue = 0;
     for (const line of input.items) {
-      const soldLine = sale.items.find((i) => String(i.productId) === line.productId);
-      if (!soldLine) throw new ApiError(400, 'NOT_IN_SALE', `Product ${line.productId} is not on this sale`);
+      const soldLines = sale.items.filter((i) => String(i.productId) === line.productId);
+      if (soldLines.length === 0) throw new ApiError(400, 'NOT_IN_SALE', `Product ${line.productId} is not on this sale`);
+      const soldQty = soldLines.reduce((sum, i) => sum + i.qty, 0);
+      const avgUnitPrice = round2(soldLines.reduce((sum, i) => sum + i.qty * i.unitPrice, 0) / soldQty);
+      const avgUnitCost = round4(soldLines.reduce((sum, i) => sum + i.qty * i.unitCostAtSale, 0) / soldQty);
       const alreadyReturned = sale.returns
         .flatMap((r) => r.items)
         .filter((i) => String(i.productId) === line.productId)
         .reduce((sum, i) => sum + i.qty, 0);
-      if (line.qty > soldLine.qty - alreadyReturned) {
+      if (line.qty > soldQty - alreadyReturned) {
         throw new ApiError(400, 'OVER_RETURN',
-          `Cannot return ${line.qty} of this product - only ${soldLine.qty - alreadyReturned} left un-returned`);
+          `Cannot return ${line.qty} of this product - only ${soldQty - alreadyReturned} left un-returned`);
       }
       await postMovement({
-        type: 'SALE_RETURN_IN', itemKind: 'FINISHED', itemId: soldLine.productId, qty: line.qty,
-        unitCost: soldLine.unitCostAtSale, refType: 'SALE', refId: sale._id, userId,
+        type: 'SALE_RETURN_IN', itemKind: 'FINISHED', itemId: soldLines[0].productId, qty: line.qty,
+        unitCost: avgUnitCost, refType: 'SALE', refId: sale._id, userId,
       }, session);
-      returnValue = round2(returnValue + line.qty * soldLine.unitPrice);
+      returnValue = round2(returnValue + line.qty * avgUnitPrice);
     }
 
     let udhaarReduced = 0;
     if (sale.customerId) {
+      // Deliberately no isDeleted filter: a deleted customer's udhaar is still real; recount agrees.
       const customer = await Customer.findById(sale.customerId).session(session);
       if (customer) {
         udhaarReduced = round2(Math.min(returnValue, customer.udhaarBalance));
