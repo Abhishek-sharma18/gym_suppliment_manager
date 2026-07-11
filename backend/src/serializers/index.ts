@@ -52,3 +52,15 @@ export function serializePurchase(doc: AnyDoc, role: Role): Record<string, unkno
   }
   return o;
 }
+
+export function serializeProduction(doc: AnyDoc, role: Role): Record<string, unknown> {
+  const o = baseDoc(doc);
+  if (role !== 'admin') {
+    delete o.costSnapshot;
+    o.materialsConsumed = (o.materialsConsumed as Record<string, unknown>[]).map((l) => {
+      const { costPerUseUnit, ...rest } = l;
+      return rest;
+    });
+  }
+  return o;
+}

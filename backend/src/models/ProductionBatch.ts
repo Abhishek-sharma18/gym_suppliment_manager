@@ -11,6 +11,8 @@ export interface IProductionBatch {
     materialId: Types.ObjectId; plannedQty: number; actualQty: number; wastageQty: number; costPerUseUnit: number;
   }[];
   costSnapshot: { materialCost: number; packagingCost: number; totalCost: number; unitCost: number };
+  createdBy?: Types.ObjectId;
+  updatedBy?: Types.ObjectId;
 }
 
 const schema = new Schema<IProductionBatch>({
