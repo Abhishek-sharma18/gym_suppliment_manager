@@ -470,3 +470,5 @@ Fixed before merge: AppShell now redirects to /login only on 401 (other errors s
 - Take-payment button disabled until customer detail loads; index-keyed row-error staleness after add/remove; reports invalidation on transactional mutations if reports ever embed on those pages.
 
 ### Spec deviation (recorded): spec Sec 9 says admin-only pages "redirect staff away"; the implementation renders an inline 403 state instead (equal protection - the API 403s everything; better UX). Accepted.
+
+Addendum (final re-review): two more Phase 2 ticket lines - failed-logout bounce gives no feedback (notify 'Logout failed - try again'; qc.clear only runs on success); sub-paisa rounding divergence between client one-shot round2 and server per-line rounding (only visible failure mode already surfaced via the customerId FormHelperText fallback).
