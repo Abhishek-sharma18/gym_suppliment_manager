@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { audit, isoDate, money, objectId } from './common';
+import { audit, isoDate, listQuery, money, objectId } from './common';
 
 export const consumeLineIn = z.object({
   materialId: objectId,
@@ -39,3 +39,9 @@ export const productionOut = z.object({
   costSnapshot: costSnapshot.optional(), // admin only — immutable once written
 }).extend(audit.shape);
 export type ProductionOut = z.infer<typeof productionOut>;
+
+export const productionQuery = listQuery.extend({
+  productId: objectId.optional(),
+  from: isoDate.optional(),
+  to: isoDate.optional(),
+});

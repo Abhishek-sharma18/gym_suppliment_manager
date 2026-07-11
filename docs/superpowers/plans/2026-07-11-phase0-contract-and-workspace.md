@@ -1126,3 +1126,15 @@ git commit -m "docs: workspace run instructions"
 - **Phase 2 — Integration** (swap msw for real API, seed script, end-to-end verification)
 
 Each will be written with superpowers:writing-plans after this plan completes, importing the exact names in the Interfaces blocks above.
+
+---
+
+## Post-review amendments (2026-07-11, final whole-branch review)
+
+The plan's own code blocks contained defects fixed after the branch review — the implementation deliberately deviates from the blocks above in these ways:
+
+1. `materialUpdate`/`productUpdate` no longer inherit `.default()` fields from their create schemas (zod 4 `.partial()` re-injects defaults for absent keys → PATCH would have wiped `bom`/reset costs).
+2. `profitReportOut.grossProfit`/`netProfit` are `z.number()` (signed) — losses are representable.
+3. Added query schemas: `profitQuery`, `expiringQuery`, `salesSummaryQuery`, `purchaseQuery`, `saleQuery`, `paymentQuery`, `expenseQuery`, `productionQuery`.
+4. `paymentCreate.mode` renamed to `paymentMode` (consistency with purchases/sales; spec §4 updated).
+5. CLAUDE.md non-negotiables 11 (always `.parse()` responses; dates are ISO strings on the wire) and 12 (server rounds money to paise) added.

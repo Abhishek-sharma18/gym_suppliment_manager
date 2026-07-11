@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { PAYMENT_MODES } from './enums';
-import { audit, isoDate, money, objectId } from './common';
+import { audit, isoDate, listQuery, money, objectId } from './common';
 
 export const saleLineIn = z.object({
   productId: objectId,
@@ -55,3 +55,9 @@ export const saleOut = z.object({
   })).default([]),
 }).extend(audit.shape);
 export type SaleOut = z.infer<typeof saleOut>;
+
+export const saleQuery = listQuery.extend({
+  customerId: objectId.optional(),
+  from: isoDate.optional(),
+  to: isoDate.optional(),
+});

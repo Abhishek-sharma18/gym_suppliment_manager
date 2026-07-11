@@ -14,7 +14,11 @@ export const productCreate = z.object({
   bom: z.array(bomLine).default([]),
   reorderLevel: z.number().min(0).default(0),
 });
-export const productUpdate = productCreate.partial();
+export const productUpdate = productCreate.partial().extend({
+  packagingCostPerUnit: money.optional(),
+  bom: z.array(bomLine).optional(),
+  reorderLevel: z.number().min(0).optional(),
+});
 export const productOut = productCreate.extend({
   _id: objectId,
   currentQty: z.number(),

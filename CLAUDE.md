@@ -22,6 +22,8 @@ npm workspaces: `shared/` (zod contract — schemas, enums, types), `backend/` (
 8. Keep `dns.setServers(['8.8.8.8', '1.1.1.1'])` in the backend DB config (this machine's Node resolver is broken for SRV lookups).
 9. API responses: `{ data: ... }` on success, `{ error: { code, message, fields? } }` on failure. Lists: `{ data, page, limit, total }`.
 10. TypeScript strict, ESM, TDD (vitest + supertest on backend). Commit after each task.
+11. **Dates on the wire are ISO strings; `*Out` schemas coerce to `Date`.** Every API response consumed by the frontend is validated with its `*Out` schema via `.parse()` — never cast (`as SaleOut`) a raw fetch result.
+12. **The server rounds all money to 2 decimals (paise)** before computing or persisting any derived amount (line totals, udhaar, costs, averages).
 
 ## RBAC summary
 

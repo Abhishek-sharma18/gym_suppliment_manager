@@ -8,7 +8,9 @@ export const materialCreate = z.object({
   conversionFactor: z.number().positive(), // 1 buyUnit = N useUnit
   reorderLevel: z.number().min(0).default(0), // in useUnit
 });
-export const materialUpdate = materialCreate.partial();
+export const materialUpdate = materialCreate.partial().extend({
+  reorderLevel: z.number().min(0).optional(),
+});
 export const materialOut = materialCreate.extend({
   _id: objectId,
   currentQty: z.number(), // useUnit; cache maintained only by postMovement()

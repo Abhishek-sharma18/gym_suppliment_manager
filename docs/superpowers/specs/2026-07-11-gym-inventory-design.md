@@ -50,7 +50,7 @@ All docs carry audit fields `createdBy`, `updatedBy` (user ids) and timestamps. 
 - **purchases** — supplierId, invoiceNo?, date, items[]: `{ materialId, qtyBuyUnit, costPerBuyUnit, lineTotal }`, totalAmount, paymentMode.
 - **production_batches** — batchNo (auto `B-YYYYMMDD-<seq>`), productId, qtyProduced, date, expiryDate?, materialsConsumed[]: `{ materialId, plannedQty, actualQty, wastageQty, costPerUseUnit }`, **costSnapshot**: `{ materialCost, packagingCost, totalCost, unitCost }`.
 - **sales** — invoiceNo (auto `S-YYYYMMDD-<seq>`), customerId? (required if udhaar > 0), date, items[]: `{ productId, qty, unitPrice (prefilled from product, editable), unitCostAtSale (snapshot of product avgUnitCost; stripped for staff), lineTotal }`, subtotal, discount, total, paymentMode: `CASH | UPI | CARD`, amountPaid, udhaarAmount.
-- **payments** — customerId, amount, date, mode, notes (settles udhaar; reduces `udhaarBalance`).
+- **payments** — customerId, amount, date, paymentMode, notes (settles udhaar; reduces `udhaarBalance`).
 - **expenses** — category: `RENT | SALARY | ELECTRICITY | TRANSPORT | PACKAGING | OTHER`, amount, date, notes. Admin only.
 - **stock_movements** — the ledger. `{ type, itemKind: RAW | FINISHED, itemId, qty (signed: + in, − out), unitCost?, refType, refId, note?, createdBy, createdAt }`. **Immutable.**
   Movement types: `PURCHASE_IN, PRODUCTION_CONSUME, PRODUCTION_OUT, SALE_OUT, SALE_RETURN_IN, WASTAGE, ADJUSTMENT`.

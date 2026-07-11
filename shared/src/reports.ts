@@ -40,12 +40,12 @@ export const profitReportOut = z.object({
   month: z.string(), // 'YYYY-MM'
   revenue: money,
   costOfGoodsSold: money, // Σ unitCostAtSale × qty over the month's sales
-  grossProfit: money,     // revenue − costOfGoodsSold
+  grossProfit: z.number(),  // revenue − costOfGoodsSold; negative = loss
   overhead: money,        // month's expenses total
   unitsProduced: z.number(),
   unitsSold: z.number(),
   overheadPerUnit: money, // overhead ÷ unitsProduced (0 if none produced)
-  netProfit: money,       // grossProfit − overhead
+  netProfit: z.number(),    // grossProfit − overhead; negative = loss
 });
 
 export const udhaarEntry = z.object({
@@ -73,4 +73,17 @@ export const recountOut = z.object({
     cachedQty: z.number(),  // value before rebuild
     ledgerQty: z.number(),  // value recomputed from movements
   })),
+});
+
+export const profitQuery = z.object({
+  month: z.string().regex(/^\d{4}-(0[1-9]|1[0-2])$/, 'use YYYY-MM'),
+});
+
+export const expiringQuery = z.object({
+  days: z.coerce.number().int().min(1).max(365).default(30),
+});
+
+export const salesSummaryQuery = z.object({
+  from: isoDate,
+  to: isoDate,
 });
