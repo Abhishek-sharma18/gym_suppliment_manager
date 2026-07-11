@@ -3,6 +3,8 @@ import { ITEM_KINDS, MOVEMENT_TYPES, ROLES } from './enums';
 import { listQuery, objectId } from './common';
 import { materialCreate } from './materials';
 import { productCreate } from './products';
+import { adjustmentCreate } from './movements';
+import { saleCreate } from './sales';
 
 describe('enums', () => {
   it('defines the exact role and movement sets from the spec', () => {
@@ -36,5 +38,30 @@ describe('master data', () => {
     const p = productCreate.parse({ name: 'Protein Jar 1kg', sellingPrice: 2500 });
     expect(p.bom).toEqual([]);
     expect(p.packagingCostPerUnit).toBe(0);
+  });
+});
+
+describe('sales', () => {
+  const items = [{ productId: '64b7f3a2c9e77a0012345678', qty: 2, unitPrice: 100 }];
+  const base = { date: '2026-07-11', paymentMode: 'CASH', items };
+  it('accepts a fully paid sale without a customer', () => {
+    expect(saleCreate.safeParse({ ...base, amountPaid: 200 }).success).toBe(true);
+  });
+  it('rejects amountPaid above total', () => {
+    expect(saleCreate.safeParse({ ...base, amountPaid: 250 }).success).toBe(false);
+  });
+  it('requires customerId when there is udhaar', () => {
+    expect(saleCreate.safeParse({ ...base, amountPaid: 50 }).success).toBe(false);
+    expect(saleCreate.safeParse({
+      ...base, amountPaid: 50, customerId: '64b7f3a2c9e77a0012345678',
+    }).success).toBe(true);
+  });
+});
+
+describe('adjustments', () => {
+  it('rejects qty 0 and requires a note', () => {
+    const a = { itemKind: 'RAW', itemId: '64b7f3a2c9e77a0012345678', qty: 0, note: 'recount fix' };
+    expect(adjustmentCreate.safeParse(a).success).toBe(false);
+    expect(adjustmentCreate.safeParse({ ...a, qty: -5 }).success).toBe(true);
   });
 });
