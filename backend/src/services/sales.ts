@@ -68,6 +68,7 @@ export async function createSaleReturn(saleId: string, input: ReturnInput, userI
     }
 
     let returnValue = 0;
+    let returnCogs = 0;
     for (const line of input.items) {
       const soldLines = sale.items.filter((i) => String(i.productId) === line.productId);
       if (soldLines.length === 0) throw new ApiError(400, 'NOT_IN_SALE', `Product ${line.productId} is not on this sale`);
@@ -87,6 +88,7 @@ export async function createSaleReturn(saleId: string, input: ReturnInput, userI
         unitCost: avgUnitCost, refType: 'SALE', refId: sale._id, userId,
       }, session);
       returnValue = round2(returnValue + line.qty * avgUnitPrice);
+      returnCogs = round2(returnCogs + line.qty * avgUnitCost);
     }
 
     let udhaarReduced = 0;
@@ -107,6 +109,8 @@ export async function createSaleReturn(saleId: string, input: ReturnInput, userI
       items: input.items.map((i) => ({ productId: new mongoose.Types.ObjectId(i.productId), qty: i.qty })),
       refundNote: input.refundNote,
       udhaarReduced,
+      returnValue,
+      returnCogs,
       createdBy: userId as Types.ObjectId,
     });
     await sale.save({ session });

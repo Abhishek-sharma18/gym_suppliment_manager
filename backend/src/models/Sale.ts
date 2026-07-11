@@ -18,6 +18,8 @@ export interface ISale {
     items: { productId: Types.ObjectId; qty: number }[];
     refundNote?: string;
     udhaarReduced?: number;
+    returnValue?: number;
+    returnCogs?: number;
     createdBy?: Types.ObjectId;
   }[];
   createdBy?: Types.ObjectId;
@@ -49,6 +51,8 @@ const schema = new Schema<ISale>({
     }],
     refundNote: String,
     udhaarReduced: Number,
+    returnValue: Number,
+    returnCogs: Number,
     createdBy: { type: Schema.Types.ObjectId, ref: 'User' },
   }],
   ...auditFields,

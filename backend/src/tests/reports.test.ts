@@ -150,5 +150,34 @@ describe('reports', () => {
     expect(summaryAdmin.status).toBe(200);
     expect(summaryAdmin.body.data.count).toBe(2);
     expect(summaryAdmin.body.data.revenue).toBe(7400);
+
+    // --- returns deduct from revenue / COGS / units sold (by return date) ---
+    const saleReturn = await admin.post(`/api/sales/${sale2.body.data._id}/return`).send({
+      items: [{ productId: String(jar._id), qty: 1 }],
+    });
+    expect(saleReturn.status).toBe(200);
+
+    const profitAfterReturn = await admin.get('/api/reports/profit').query({ month });
+    expect(profitAfterReturn.status).toBe(200);
+    expect(profitAfterReturn.body.data).toMatchObject({
+      month,
+      revenue: 4900,
+      costOfGoodsSold: 697,
+      grossProfit: 4203,
+      overhead: 5000,
+      netProfit: -797,
+      unitsSold: 2,
+      unitsProduced: 10,
+      overheadPerUnit: 500,
+    });
+
+    const dashAfterReturn = await admin.get('/api/reports/dashboard');
+    expect(dashAfterReturn.status).toBe(200);
+    expect(dashAfterReturn.body.data.todaySalesTotal).toBe(4900);
+
+    const summaryAfterReturn = await admin.get('/api/reports/sales-summary').query(query);
+    expect(summaryAfterReturn.status).toBe(200);
+    expect(summaryAfterReturn.body.data.revenue).toBe(4900);
+    expect(summaryAfterReturn.body.data.count).toBe(2);
   });
 });

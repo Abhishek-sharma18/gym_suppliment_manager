@@ -97,6 +97,8 @@ describe('sales', () => {
     expect((await Customer.findById(customer._id))!.udhaarBalance).toBe(2500); // 5000 - 2500
     expect(ret.body.data.returns).toHaveLength(1);
     expect(ret.body.data.returns[0].udhaarReduced).toBe(2500);
+    expect(ret.body.data.returns[0].returnValue).toBe(2500);
+    expect(ret.body.data.returns[0].returnCogs).toBe(348.5);
     expect(await StockMovement.countDocuments({ type: 'SALE_RETURN_IN' })).toBe(1);
 
     expect((await admin.post(`/api/sales/${saleId}/return`).send({
