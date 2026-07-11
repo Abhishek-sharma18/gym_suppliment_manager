@@ -40,3 +40,15 @@ export function serializeMovement(doc: AnyDoc, role: Role): Record<string, unkno
   if (role !== 'admin') delete o.unitCost;
   return o;
 }
+
+export function serializePurchase(doc: AnyDoc, role: Role): Record<string, unknown> {
+  const o = baseDoc(doc);
+  if (role !== 'admin') {
+    delete o.totalAmount;
+    o.items = (o.items as Record<string, unknown>[]).map((i) => {
+      const { costPerBuyUnit, lineTotal, ...rest } = i;
+      return rest;
+    });
+  }
+  return o;
+}

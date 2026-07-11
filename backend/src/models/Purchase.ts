@@ -9,6 +9,8 @@ export interface IPurchase {
   paymentMode: PaymentMode;
   items: { materialId: Types.ObjectId; qtyBuyUnit: number; costPerBuyUnit: number; lineTotal: number }[];
   totalAmount: number;
+  createdBy?: Types.ObjectId;
+  updatedBy?: Types.ObjectId;
 }
 
 const schema = new Schema<IPurchase>({

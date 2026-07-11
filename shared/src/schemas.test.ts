@@ -7,6 +7,7 @@ import { adjustmentCreate } from './movements';
 import { saleCreate } from './sales';
 import { consumeLineIn } from './production';
 import { profitReportOut } from './reports';
+import { purchaseOut } from './purchases';
 
 describe('enums', () => {
   it('defines the exact role and movement sets from the spec', () => {
@@ -103,6 +104,17 @@ describe('sales edge cases', () => {
     expect(saleCreate.safeParse({
       date: '2026-07-11', paymentMode: 'CASH', amountPaid: 99.99,
       items: [{ productId: id, qty: 3, unitPrice: 33.33 }],
+    }).success).toBe(true);
+  });
+});
+
+describe('purchase output', () => {
+  it('parses a staff-stripped purchase (no cost fields)', () => {
+    expect(purchaseOut.safeParse({
+      _id: '64b7f3a2c9e77a0012345678', supplierId: '64b7f3a2c9e77a0012345678',
+      date: '2026-07-11', paymentMode: 'CASH',
+      items: [{ materialId: '64b7f3a2c9e77a0012345678', qtyBuyUnit: 10 }],
+      createdAt: '2026-07-11', updatedAt: '2026-07-11',
     }).success).toBe(true);
   });
 });
