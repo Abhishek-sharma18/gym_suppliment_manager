@@ -10,6 +10,8 @@ import { movementsRouter } from './routes/movements';
 import { purchasesRouter } from './routes/purchases';
 import { productionRouter } from './routes/production';
 import { salesRouter } from './routes/sales';
+import { paymentsRouter } from './routes/payments';
+import { expensesRouter } from './routes/expenses';
 
 export function createApp(): express.Express {
   const app = express();
@@ -36,6 +38,8 @@ export function createApp(): express.Express {
   app.use('/api/purchases', requireAuth, purchasesRouter);
   app.use('/api/production', requireAuth, productionRouter);
   app.use('/api/sales', requireAuth, salesRouter);
+  app.use('/api/payments', requireAuth, paymentsRouter);
+  app.use('/api/expenses', requireAuth, requireRole('admin'), expensesRouter);
 
   app.use((_req, res) => {
     res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Route not found' } });

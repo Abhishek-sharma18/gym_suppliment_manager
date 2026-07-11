@@ -64,6 +64,14 @@ export function serializeSale(doc: AnyDoc, role: Role): Record<string, unknown> 
   return o;
 }
 
+export function serializePayment(doc: AnyDoc, _role: Role): Record<string, unknown> {
+  return baseDoc(doc);
+}
+
+export function serializeExpense(doc: AnyDoc, _role: Role): Record<string, unknown> {
+  return baseDoc(doc);
+}
+
 export function serializeProduction(doc: AnyDoc, role: Role): Record<string, unknown> {
   const o = baseDoc(doc);
   if (role !== 'admin') {

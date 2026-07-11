@@ -1,4 +1,4 @@
-import { Schema, model } from 'mongoose';
+import { Schema, model, Types } from 'mongoose';
 import { EXPENSE_CATEGORIES, type ExpenseCategory } from '@gym/shared';
 import { auditFields } from './common';
 
@@ -7,6 +7,8 @@ export interface IExpense {
   amount: number;
   date: Date;
   notes?: string;
+  createdBy?: Types.ObjectId;
+  updatedBy?: Types.ObjectId;
 }
 
 const schema = new Schema<IExpense>({

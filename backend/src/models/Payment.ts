@@ -8,6 +8,8 @@ export interface IPayment {
   date: Date;
   paymentMode: PaymentMode;
   notes?: string;
+  createdBy?: Types.ObjectId;
+  updatedBy?: Types.ObjectId;
 }
 
 const schema = new Schema<IPayment>({
