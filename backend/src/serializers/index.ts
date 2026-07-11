@@ -1,0 +1,88 @@
+import type { Role } from '@gym/shared';
+
+type AnyDoc = { toObject(): Record<string, unknown> } | Record<string, unknown>;
+
+export function baseDoc(doc: AnyDoc): Record<string, unknown> {
+  const obj = typeof (doc as { toObject?: () => Record<string, unknown> }).toObject === 'function'
+    ? (doc as { toObject: () => Record<string, unknown> }).toObject()
+    : { ...(doc as Record<string, unknown>) };
+  const { _id, __v, ...rest } = obj;
+  return { _id: String(_id), ...rest };
+}
+
+export function serializeUser(doc: AnyDoc, _role: Role): Record<string, unknown> {
+  const { passwordHash, ...rest } = baseDoc(doc);
+  return rest;
+}
+
+export function serializeMaterial(doc: AnyDoc, role: Role): Record<string, unknown> {
+  const o = baseDoc(doc);
+  if (role !== 'admin') delete o.avgCost;
+  return o;
+}
+
+export function serializeProduct(doc: AnyDoc, role: Role): Record<string, unknown> {
+  const o = baseDoc(doc);
+  if (role !== 'admin') {
+    delete o.avgUnitCost;
+    delete o.packagingCostPerUnit;
+  }
+  return o;
+}
+
+export function serializeSupplier(doc: AnyDoc, _role: Role): Record<string, unknown> {
+  return baseDoc(doc);
+}
+
+export function serializeCustomer(doc: AnyDoc, _role: Role): Record<string, unknown> {
+  return baseDoc(doc);
+}
+
+export function serializeMovement(doc: AnyDoc, role: Role): Record<string, unknown> {
+  const o = baseDoc(doc);
+  if (role !== 'admin') delete o.unitCost;
+  return o;
+}
+
+export function serializePurchase(doc: AnyDoc, role: Role): Record<string, unknown> {
+  const o = baseDoc(doc);
+  if (role !== 'admin') {
+    delete o.totalAmount;
+    o.items = (o.items as Record<string, unknown>[]).map((i) => {
+      const { costPerBuyUnit, lineTotal, ...rest } = i;
+      return rest;
+    });
+  }
+  return o;
+}
+
+export function serializeSale(doc: AnyDoc, role: Role): Record<string, unknown> {
+  const o = baseDoc(doc);
+  if (role !== 'admin') {
+    o.items = (o.items as Record<string, unknown>[]).map((i) => {
+      const { unitCostAtSale, ...rest } = i;
+      return rest;
+    });
+  }
+  return o;
+}
+
+export function serializePayment(doc: AnyDoc, _role: Role): Record<string, unknown> {
+  return baseDoc(doc);
+}
+
+export function serializeExpense(doc: AnyDoc, _role: Role): Record<string, unknown> {
+  return baseDoc(doc);
+}
+
+export function serializeProduction(doc: AnyDoc, role: Role): Record<string, unknown> {
+  const o = baseDoc(doc);
+  if (role !== 'admin') {
+    delete o.costSnapshot;
+    o.materialsConsumed = (o.materialsConsumed as Record<string, unknown>[]).map((l) => {
+      const { costPerUseUnit, ...rest } = l;
+      return rest;
+    });
+  }
+  return o;
+}

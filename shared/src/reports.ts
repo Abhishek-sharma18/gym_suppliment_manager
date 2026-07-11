@@ -73,6 +73,7 @@ export const recountOut = z.object({
     cachedQty: z.number(),  // value before rebuild
     ledgerQty: z.number(),  // value recomputed from movements
   })),
+  customersFixed: z.number().int(), // customers whose udhaarBalance was rebuilt
 });
 
 export const profitQuery = z.object({

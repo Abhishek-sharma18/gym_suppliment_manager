@@ -2,11 +2,12 @@ import { describe, expect, it } from 'vitest';
 import { ITEM_KINDS, MOVEMENT_TYPES, ROLES } from './enums';
 import { listQuery, objectId } from './common';
 import { materialCreate, materialUpdate } from './materials';
-import { productCreate, productUpdate } from './products';
+import { productCreate, productOut, productUpdate } from './products';
 import { adjustmentCreate } from './movements';
 import { saleCreate } from './sales';
 import { consumeLineIn } from './production';
 import { profitReportOut } from './reports';
+import { purchaseOut } from './purchases';
 
 describe('enums', () => {
   it('defines the exact role and movement sets from the spec', () => {
@@ -40,6 +41,17 @@ describe('master data', () => {
     const p = productCreate.parse({ name: 'Protein Jar 1kg', sellingPrice: 2500 });
     expect(p.bom).toEqual([]);
     expect(p.packagingCostPerUnit).toBe(0);
+  });
+  it('productOut parses a staff-shaped product (no avgUnitCost, no packagingCostPerUnit)', () => {
+    expect(productOut.safeParse({
+      _id: '64b7f3a2c9e77a0012345678',
+      name: 'Protein Jar', variant: '1kg', sellingPrice: 2500,
+      bom: [{ materialId: '64b7f3a2c9e77a0012345678', qtyPerUnit: 900 }],
+      reorderLevel: 0,
+      currentQty: 10,
+      isDeleted: false,
+      createdAt: '2026-07-11', updatedAt: '2026-07-11',
+    }).success).toBe(true);
   });
 });
 
@@ -103,6 +115,17 @@ describe('sales edge cases', () => {
     expect(saleCreate.safeParse({
       date: '2026-07-11', paymentMode: 'CASH', amountPaid: 99.99,
       items: [{ productId: id, qty: 3, unitPrice: 33.33 }],
+    }).success).toBe(true);
+  });
+});
+
+describe('purchase output', () => {
+  it('parses a staff-stripped purchase (no cost fields)', () => {
+    expect(purchaseOut.safeParse({
+      _id: '64b7f3a2c9e77a0012345678', supplierId: '64b7f3a2c9e77a0012345678',
+      date: '2026-07-11', paymentMode: 'CASH',
+      items: [{ materialId: '64b7f3a2c9e77a0012345678', qtyBuyUnit: 10 }],
+      createdAt: '2026-07-11', updatedAt: '2026-07-11',
     }).success).toBe(true);
   });
 });

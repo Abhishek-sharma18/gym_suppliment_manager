@@ -20,8 +20,13 @@ export const purchaseOut = z.object({
   invoiceNo: z.string().optional(),
   date: isoDate,
   paymentMode: z.enum(PAYMENT_MODES),
-  items: z.array(purchaseLineIn.extend({ lineTotal: money })),
-  totalAmount: money,
+  items: z.array(z.object({
+    materialId: objectId,
+    qtyBuyUnit: z.number().positive(),
+    costPerBuyUnit: money.optional(), // admin only - stripped for staff
+    lineTotal: money.optional(),      // admin only - stripped for staff
+  })),
+  totalAmount: money.optional(),      // admin only - stripped for staff
 }).extend(audit.shape);
 export type PurchaseOut = z.infer<typeof purchaseOut>;
 

@@ -51,6 +51,7 @@ export const saleOut = z.object({
     date: isoDate,
     items: z.array(z.object({ productId: objectId, qty: z.number().int().positive() })),
     refundNote: z.string().optional(),
+    udhaarReduced: money.optional(),
     createdBy: objectId.optional(),
   })).default([]),
 }).extend(audit.shape);

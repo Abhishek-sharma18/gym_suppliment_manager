@@ -21,8 +21,9 @@ export const productUpdate = productCreate.partial().extend({
 });
 export const productOut = productCreate.extend({
   _id: objectId,
+  packagingCostPerUnit: money.optional(), // admin only - stripped for staff
   currentQty: z.number(),
-  avgUnitCost: money.optional(), // admin only — moving weighted average across batches
+  avgUnitCost: money.optional(), // admin only - moving weighted average across batches
   isDeleted: z.boolean(),
 }).extend(audit.shape);
 export type ProductOut = z.infer<typeof productOut>;
