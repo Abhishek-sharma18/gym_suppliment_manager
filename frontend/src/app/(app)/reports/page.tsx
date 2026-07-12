@@ -1,10 +1,13 @@
 'use client';
 
 import { useState, type ReactNode } from 'react';
+import { useMutation } from '@tanstack/react-query';
+import { z } from 'zod';
 import Box from '@mui/material/Box';
 import Paper from '@mui/material/Paper';
 import Typography from '@mui/material/Typography';
 import TextField from '@mui/material/TextField';
+import Button from '@mui/material/Button';
 import Stack from '@mui/material/Stack';
 import Skeleton from '@mui/material/Skeleton';
 import Table from '@mui/material/Table';
@@ -13,6 +16,8 @@ import TableCell from '@mui/material/TableCell';
 import TableContainer from '@mui/material/TableContainer';
 import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
+import { recountOut } from '@gym/shared';
+import { postJson, ApiClientError } from '@/lib/api';
 import { useMe } from '@/lib/auth';
 import { useProfit, useStockValue, useUdhaarReport, useSalesSummary } from '@/lib/useReports';
 import { enumLabel, inr, localDateValue, monthValue, EM_DASH } from '@/lib/fmt';
@@ -21,6 +26,12 @@ import { usePageTitle } from '@/lib/usePageTitle';
 import { PageHeader } from '@/components/PageHeader';
 import { MoneyText } from '@/components/MoneyText';
 import { EmptyState } from '@/components/EmptyState';
+import { ConfirmDialog } from '@/components/ConfirmDialog';
+import { useNotify } from '@/components/SnackbarProvider';
+
+// Not exported from @gym/shared as a named *Out type (same as the rest of this page's report
+// shapes) — inferred locally from the schema.
+type RecountOut = z.infer<typeof recountOut>;
 
 function SectionPaper({ title, action, children }: { title: string; action?: ReactNode; children: ReactNode }) {
   return (
@@ -281,6 +292,116 @@ function SalesSummarySection() {
   );
 }
 
+/**
+ * Admin-only maintenance action: rebuilds the cached stock (Material/Product currentQty)
+ * and customer udhaarBalance fields from the StockMovement/Sale/Payment ledger. Not
+ * transactional against concurrent writes (see backend/src/services/recount.ts), so this
+ * is gated behind a ConfirmDialog and meant to be run when the shop is idle. Renders the
+ * result inline (stat lines + a drift-details table) rather than only a toast, so an admin
+ * can see exactly what was off before trusting the "fixed" claim.
+ */
+function RecountSection() {
+  const notify = useNotify();
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [result, setResult] = useState<RecountOut | null>(null);
+
+  const recount = useMutation({
+    mutationFn: async () => {
+      const res = await postJson<{ data: unknown }>('/admin/recount', {});
+      return recountOut.parse(res.data);
+    },
+    onSuccess: (data) => {
+      setResult(data);
+      notify(`Recount complete - ${data.driftsFound} drifts fixed`);
+    },
+    onError: (err: unknown) => {
+      notify(err instanceof ApiClientError ? err.message : 'Recount failed', 'error');
+    },
+  });
+
+  return (
+    <SectionPaper title="Recount stock caches">
+      <Stack spacing={2}>
+        <Typography color="text.secondary">
+          Rebuilds cached stock and udhaar balances from the ledger. Run when the shop is idle.
+        </Typography>
+        <Button
+          variant="outlined"
+          onClick={() => setConfirmOpen(true)}
+          disabled={recount.isPending}
+          sx={{ alignSelf: 'flex-start' }}
+        >
+          {recount.isPending ? 'Recounting…' : 'Recount stock caches'}
+        </Button>
+
+        {result && (
+          <>
+            <Stack direction="row" spacing={4} sx={{ flexWrap: 'wrap' }}>
+              <Box>
+                <Typography variant="body2" color="text.secondary">
+                  Drifts found
+                </Typography>
+                <Box sx={{ fontFamily: monoFamily, fontSize: '1.25rem' }}>{result.driftsFound}</Box>
+              </Box>
+              <Box>
+                <Typography variant="body2" color="text.secondary">
+                  Customers fixed
+                </Typography>
+                <Box sx={{ fontFamily: monoFamily, fontSize: '1.25rem' }}>{result.customersFixed}</Box>
+              </Box>
+            </Stack>
+
+            {result.details.length > 0 && (
+              <TableContainer sx={{ overflowX: 'auto' }}>
+                <Table size="small">
+                  <TableHead>
+                    <TableRow>
+                      <TableCell>Name</TableCell>
+                      <TableCell>Kind</TableCell>
+                      <TableCell align="right">Cached</TableCell>
+                      <TableCell align="right">Ledger</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {result.details.map((d) => (
+                      <TableRow key={`${d.itemKind}:${d.itemId}`}>
+                        <TableCell>{d.name}</TableCell>
+                        <TableCell>{enumLabel(d.itemKind)}</TableCell>
+                        <TableCell align="right">
+                          <Box component="span" sx={{ fontFamily: monoFamily }}>
+                            {d.cachedQty}
+                          </Box>
+                        </TableCell>
+                        <TableCell align="right">
+                          <Box component="span" sx={{ fontFamily: monoFamily }}>
+                            {d.ledgerQty}
+                          </Box>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            )}
+          </>
+        )}
+      </Stack>
+
+      <ConfirmDialog
+        open={confirmOpen}
+        title="Recount stock caches"
+        body="Rebuilds cached stock and udhaar balances from the ledger. Run when the shop is idle. Continue?"
+        confirmLabel="Recount"
+        onClose={() => setConfirmOpen(false)}
+        onConfirm={async () => {
+          await recount.mutateAsync();
+          setConfirmOpen(false);
+        }}
+      />
+    </SectionPaper>
+  );
+}
+
 export default function ReportsPage() {
   usePageTitle('Reports');
   const { data: me } = useMe();
@@ -294,6 +415,7 @@ export default function ReportsPage() {
         {isAdmin && <StockValueSection />}
         {isAdmin && <UdhaarSection />}
         <SalesSummarySection />
+        {isAdmin && <RecountSection />}
       </Stack>
     </>
   );
