@@ -166,9 +166,11 @@ changes: with no `API_PROXY_URL` set, the rewrite is inactive and `NEXT_PUBLIC_A
 1. **Backend on Render:** New + Blueprint → pick the GitHub repo → Render reads `render.yaml` from
    the repo root. Fill in the prompted env vars: `MONGO_URI` (the Atlas connection string),
    `JWT_SECRET` (a long random string — generate a **new** one for production, don't reuse a local
-   dev secret), `CLIENT_URL` (the Vercel URL, added in step 3 below; it can start as `*`). Free plan
-   note: the service spins down after ~15 min idle and the first request after that takes ~50s to
-   wake it up — upgrade to the Starter plan to avoid this.
+   dev secret), `CLIENT_URL` (the Vercel URL, added in step 3 below; it can start as `*`). Note that
+   `*` is only a temporary placeholder — it is not a valid CORS value combined with credentials, so
+   set the real Vercel URL in step 3 before anyone uses the app directly against the Render URL.
+   Free plan note: the service spins down after ~15 min idle and the first request after that takes
+   ~50s to wake it up — upgrade to the Starter plan to avoid this.
 2. **Frontend on Vercel:** New Project → import the same repo → Root Directory = `frontend` (keep
    "Include files outside root directory" ON, since the frontend depends on the `shared` workspace).
    Env vars: `NEXT_PUBLIC_API_URL` = `/api`, `API_PROXY_URL` = the Render URL (e.g.

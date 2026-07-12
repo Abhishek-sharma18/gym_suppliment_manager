@@ -19,9 +19,11 @@ export function createApp(): express.Express {
   const app = express();
 
   if (process.env.NODE_ENV === 'production') {
-    // Behind Render's proxy (and Vercel's rewrite proxy in front of that).
-    // Needed so req.ip (login rate limiter) sees a client-ish IP, not the proxy.
-    app.set('trust proxy', 1);
+    // Two proxy hops sit in front of Express in production:
+    //   browser -> Vercel rewrite proxy -> Render front door -> Express.
+    // Both must be trusted so req.ip (the login rate limiter key) resolves to
+    // the real client IP instead of Vercel's egress IP.
+    app.set('trust proxy', 2);
   }
 
   app.use(cors({
