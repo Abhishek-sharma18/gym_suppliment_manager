@@ -88,3 +88,16 @@ export const salesSummaryQuery = z.object({
   from: isoDate,
   to: isoDate,
 });
+
+export const trendPoint = z.object({
+  month: z.string(), // 'YYYY-MM'
+  revenue: money,          // returns-aware, same formula as profit(month)
+  expenses: money,
+  netProfit: z.number(),   // signed - loss months are negative
+  unitsSold: z.number().int(),
+});
+export type TrendPoint = z.infer<typeof trendPoint>;
+
+export const trendsQuery = z.object({
+  months: z.coerce.number().int().min(3).max(24).default(12),
+});

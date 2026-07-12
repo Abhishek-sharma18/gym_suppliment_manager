@@ -124,6 +124,10 @@ Run it: `npm run e2e` (from the repo root).
 - **Not part of `npm test`:** E2E tests need a network connection (Atlas) and a browser download,
   so they're deliberately excluded from the plain `npm test` workspace suite — run `npm run e2e`
   separately (e.g. in CI, as its own step, after the browser is installed).
+- **Mobile responsiveness audit (not part of `npm run e2e`):** `MOBILE_AUDIT=1 npx playwright test
+  mobile-audit` walks every page at two narrow viewports (390×844, 360×800), asserts there's no
+  page-level horizontal overflow, opens each page's primary dialog/drawer, and saves full-page
+  screenshots under `.superpowers/sdd/mobile-audit/` (git-ignored) for visual review.
 
 Design tokens: khata red / brass / warm paper palette, Bricolage Grotesque for page titles, IBM Plex Sans for body text, IBM Plex Mono for every money amount and invoice/batch number. Money totals (sale totals, udhaar balances, report KPIs) get the signature hand-ruled double-underline. See `frontend/src/lib/theme.ts` for the exact values.
 

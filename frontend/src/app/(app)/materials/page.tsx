@@ -274,7 +274,7 @@ export default function MaterialsPage() {
               required
               fullWidth
             />
-            <Stack direction="row" spacing={2}>
+            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
               <TextField
                 label="Buy unit"
                 value={form.buyUnit}

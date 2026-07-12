@@ -69,7 +69,12 @@ export function BomEditor({ value, onChange, fieldError }: BomEditorProps) {
           const materialError = fieldError?.(`bom.${index}.materialId`);
           const qtyError = fieldError?.(`bom.${index}.qtyPerUnit`);
           return (
-            <Stack key={index} direction="row" spacing={1} sx={{ alignItems: 'flex-start' }}>
+            <Stack
+              key={index}
+              direction={{ xs: 'column', sm: 'row' }}
+              spacing={1}
+              sx={{ alignItems: { sm: 'flex-start' } }}
+            >
               <Autocomplete<MaterialOut>
                 options={materials}
                 loading={isLoading}
@@ -78,7 +83,7 @@ export function BomEditor({ value, onChange, fieldError }: BomEditorProps) {
                 isOptionEqualToValue={(a, b) => a._id === b._id}
                 getOptionDisabled={(m) => value.some((r, i) => i !== index && r.materialId === m._id)}
                 onChange={(_e, newValue) => updateRow(index, { materialId: newValue?._id ?? '' })}
-                sx={{ flex: 1 }}
+                sx={{ flex: 1, minWidth: { sm: 180 } }}
                 renderInput={(params) => (
                   <TextField
                     {...params}
@@ -99,9 +104,13 @@ export function BomEditor({ value, onChange, fieldError }: BomEditorProps) {
                 error={Boolean(qtyError)}
                 helperText={qtyError ?? 'per 1 unit made'}
                 slotProps={{ htmlInput: { min: 0, step: 'any' } }}
-                sx={{ width: 160 }}
+                sx={{ width: { xs: '100%', sm: 160 } }}
               />
-              <IconButton aria-label="Remove ingredient" onClick={() => removeRow(index)} sx={{ mt: 0.5 }}>
+              <IconButton
+                aria-label="Remove ingredient"
+                onClick={() => removeRow(index)}
+                sx={{ mt: { sm: 0.5 }, alignSelf: { xs: 'flex-end', sm: 'auto' } }}
+              >
                 <DeleteOutlineIcon fontSize="small" />
               </IconButton>
             </Stack>

@@ -6,7 +6,7 @@ import { productCreate, productOut, productUpdate } from './products';
 import { adjustmentCreate } from './movements';
 import { saleCreate } from './sales';
 import { consumeLineIn } from './production';
-import { profitReportOut } from './reports';
+import { profitReportOut, trendPoint } from './reports';
 import { purchaseOut } from './purchases';
 
 describe('enums', () => {
@@ -99,6 +99,14 @@ describe('profit report', () => {
     expect(profitReportOut.safeParse({
       month: '2026-07', revenue: 100, costOfGoodsSold: 80, grossProfit: 20,
       overhead: 500, unitsProduced: 10, unitsSold: 5, overheadPerUnit: 50, netProfit: -480,
+    }).success).toBe(true);
+  });
+});
+
+describe('monthly trends', () => {
+  it('trendPoint parses a negative-netProfit point', () => {
+    expect(trendPoint.safeParse({
+      month: '2026-07', revenue: 100, expenses: 500, netProfit: -400, unitsSold: 5,
     }).success).toBe(true);
   });
 });
