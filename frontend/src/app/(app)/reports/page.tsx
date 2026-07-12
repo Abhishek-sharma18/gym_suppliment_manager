@@ -344,7 +344,7 @@ function SalesSummarySection() {
     <SectionPaper
       title="Sales summary"
       action={
-        <Stack direction="row" spacing={2}>
+        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
           <TextField
             label="From"
             type="date"

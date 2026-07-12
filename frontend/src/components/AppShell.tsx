@@ -226,7 +226,18 @@ export function AppShell({ children }: { children: ReactNode }) {
         </Drawer>
       </Box>
 
-      <Box component="main" sx={{ flexGrow: 1, width: { md: `calc(100% - ${DRAWER_WIDTH}px)` } }}>
+      <Box
+        component="main"
+        sx={{
+          flexGrow: 1,
+          // A flex item's default min-width is `auto` (its content's min-content size), not 0 -
+          // without this, any deeply nested non-wrapping content (a ToggleButtonGroup, a wide
+          // table, ...) refuses to shrink below that intrinsic width and blows the WHOLE page out
+          // horizontally instead of scrolling inside its own container. This is the fix for that.
+          minWidth: 0,
+          width: { md: `calc(100% - ${DRAWER_WIDTH}px)` },
+        }}
+      >
         <Toolbar />
         <Box sx={{ p: { xs: 2, md: 3 }, maxWidth: 1200, mx: 'auto' }}>{children}</Box>
       </Box>

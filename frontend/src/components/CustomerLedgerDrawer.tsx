@@ -137,8 +137,8 @@ export function CustomerLedgerDrawer({ customerId, onClose }: CustomerLedgerDraw
                 <Table size="small">
                   <TableHead>
                     <TableRow>
-                      <TableCell>Invoice</TableCell>
-                      <TableCell>Date</TableCell>
+                      <TableCell sx={{ whiteSpace: 'nowrap' }}>Invoice</TableCell>
+                      <TableCell sx={{ whiteSpace: 'nowrap' }}>Date</TableCell>
                       <TableCell align="right">Total</TableCell>
                       <TableCell align="right">Udhaar</TableCell>
                     </TableRow>
@@ -146,8 +146,8 @@ export function CustomerLedgerDrawer({ customerId, onClose }: CustomerLedgerDraw
                   <TableBody>
                     {sales.rows.map((s: SaleOut) => (
                       <TableRow key={s._id}>
-                        <TableCell sx={{ fontFamily: monoFamily }}>{s.invoiceNo}</TableCell>
-                        <TableCell>{dateFmt(s.date)}</TableCell>
+                        <TableCell sx={{ fontFamily: monoFamily, whiteSpace: 'nowrap' }}>{s.invoiceNo}</TableCell>
+                        <TableCell sx={{ whiteSpace: 'nowrap' }}>{dateFmt(s.date)}</TableCell>
                         <TableCell align="right">
                           <MoneyText value={s.total} />
                         </TableCell>
@@ -176,7 +176,7 @@ export function CustomerLedgerDrawer({ customerId, onClose }: CustomerLedgerDraw
                 <Table size="small">
                   <TableHead>
                     <TableRow>
-                      <TableCell>Date</TableCell>
+                      <TableCell sx={{ whiteSpace: 'nowrap' }}>Date</TableCell>
                       <TableCell align="right">Amount</TableCell>
                       <TableCell>Mode</TableCell>
                     </TableRow>
@@ -184,7 +184,7 @@ export function CustomerLedgerDrawer({ customerId, onClose }: CustomerLedgerDraw
                   <TableBody>
                     {payments.rows.map((p: PaymentOut) => (
                       <TableRow key={p._id}>
-                        <TableCell>{dateFmt(p.date)}</TableCell>
+                        <TableCell sx={{ whiteSpace: 'nowrap' }}>{dateFmt(p.date)}</TableCell>
                         <TableCell align="right">
                           <MoneyText value={p.amount} />
                         </TableCell>

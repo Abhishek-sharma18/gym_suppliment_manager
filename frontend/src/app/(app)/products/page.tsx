@@ -271,6 +271,8 @@ export default function ProductsPage() {
         open={formOpen}
         title={editTarget ? 'Edit product' : 'Add product'}
         submitLabel={editTarget ? 'Save' : 'Add product'}
+        maxWidth="sm"
+        fullScreenOnMobile
         pending={createProduct.isPending || updateProduct.isPending}
         onClose={() => setFormOpen(false)}
         onSubmit={async () => {
@@ -293,7 +295,7 @@ export default function ProductsPage() {
               required
               fullWidth
             />
-            <Stack direction="row" spacing={2}>
+            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
               <TextField
                 label="Variant"
                 value={form.variant}
@@ -311,7 +313,7 @@ export default function ProductsPage() {
                 fullWidth
               />
             </Stack>
-            <Stack direction="row" spacing={2}>
+            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
               <TextField
                 label="Selling price"
                 type="number"
