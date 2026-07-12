@@ -12,6 +12,17 @@ function isoDay(d: Date): string {
   return d.toISOString().slice(0, 10);
 }
 
+// month/day helpers for the trends scenario - UTC-based, consistent with reports.ts's profit()
+function monthKey(base: Date, offset: number): string {
+  const d = new Date(Date.UTC(base.getUTCFullYear(), base.getUTCMonth() + offset, 1));
+  return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}`;
+}
+
+function dateInMonth(base: Date, offset: number, day = 5): string {
+  const d = new Date(Date.UTC(base.getUTCFullYear(), base.getUTCMonth() + offset, day));
+  return isoDay(d);
+}
+
 describe('reports', () => {
   it('runs a full purchase -> production -> sales -> expense flow and reports on it', async () => {
     const today = new Date();
@@ -179,5 +190,57 @@ describe('reports', () => {
     expect(summaryAfterReturn.status).toBe(200);
     expect(summaryAfterReturn.body.data.revenue).toBe(4900);
     expect(summaryAfterReturn.body.data.count).toBe(2);
+  });
+
+  it('reports monthly trends across a two-month scenario, zero-filled in between, oldest to newest', async () => {
+    const now = new Date();
+    const admin = await loginAgent(app, ADMIN);
+    const staff = await loginAgent(app, STAFF);
+
+    const jar = await Product.create({
+      name: 'Trend Jar', sellingPrice: 1000, packagingCostPerUnit: 0, currentQty: 10,
+    });
+
+    // oldest month (offset -2): revenue 2000, expenses 300, no production so cogs 0 -> netProfit 1700
+    const saleOld = await admin.post('/api/sales').send({
+      date: dateInMonth(now, -2), paymentMode: 'CASH', amountPaid: 2000,
+      items: [{ productId: String(jar._id), qty: 2, unitPrice: 1000 }],
+    });
+    expect(saleOld.status).toBe(201);
+    const expenseOld = await admin.post('/api/expenses').send({
+      category: 'RENT', amount: 300, date: dateInMonth(now, -2),
+    });
+    expect(expenseOld.status).toBe(201);
+
+    // middle month (offset -1) intentionally left empty -> must be zero-filled
+
+    // newest month (offset 0): revenue 3000, expenses 4000, no production so cogs 0 -> netProfit -1000 (loss)
+    const saleNew = await admin.post('/api/sales').send({
+      date: dateInMonth(now, 0), paymentMode: 'CASH', amountPaid: 3000,
+      items: [{ productId: String(jar._id), qty: 3, unitPrice: 1000 }],
+    });
+    expect(saleNew.status).toBe(201);
+    const expenseNew = await admin.post('/api/expenses').send({
+      category: 'RENT', amount: 4000, date: dateInMonth(now, 0),
+    });
+    expect(expenseNew.status).toBe(201);
+
+    const trends = await admin.get('/api/reports/trends').query({ months: 3 });
+    expect(trends.status).toBe(200);
+    expect(trends.body.data).toHaveLength(3);
+    expect(trends.body.data.map((p: { month: string }) => p.month)).toEqual([
+      monthKey(now, -2), monthKey(now, -1), monthKey(now, 0),
+    ]);
+    expect(trends.body.data[0]).toMatchObject({
+      month: monthKey(now, -2), revenue: 2000, expenses: 300, netProfit: 1700, unitsSold: 2,
+    });
+    expect(trends.body.data[1]).toMatchObject({
+      month: monthKey(now, -1), revenue: 0, expenses: 0, netProfit: 0, unitsSold: 0,
+    });
+    expect(trends.body.data[2]).toMatchObject({
+      month: monthKey(now, 0), revenue: 3000, expenses: 4000, netProfit: -1000, unitsSold: 3,
+    });
+
+    expect((await staff.get('/api/reports/trends').query({ months: 3 })).status).toBe(403);
   });
 });

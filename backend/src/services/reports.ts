@@ -2,7 +2,7 @@ import type { z } from 'zod';
 import type { PaymentMode, Role } from '@gym/shared';
 import {
   dashboardOut, expiringBatch, lowStockItem, profitReportOut,
-  salesSummaryOut, stockValueOut, udhaarEntry,
+  salesSummaryOut, stockValueOut, trendPoint, udhaarEntry,
 } from '@gym/shared';
 import { Customer, Expense, Material, Product, ProductionBatch, Sale } from '../models';
 import { round2 } from '../lib/round';
@@ -14,6 +14,7 @@ type StockValueOut = z.infer<typeof stockValueOut>;
 type ProfitReportOut = z.infer<typeof profitReportOut>;
 type SalesSummaryOut = z.infer<typeof salesSummaryOut>;
 type DashboardOut = z.infer<typeof dashboardOut>;
+type TrendPointOut = z.infer<typeof trendPoint>;
 
 export async function stockValue(): Promise<StockValueOut> {
   const [rawAgg] = await Material.aggregate<{ total: number }>([
@@ -143,6 +144,25 @@ export async function profit(month: string): Promise<ProfitReportOut> {
     month, revenue, costOfGoodsSold, grossProfit, overhead,
     unitsProduced, unitsSold, overheadPerUnit, netProfit,
   };
+}
+
+// 'YYYY-MM' for the month `offset` calendar months before `base`, UTC - consistent with profit()'s boundaries.
+function monthKeyBefore(base: Date, offset: number): string {
+  const d = new Date(Date.UTC(base.getUTCFullYear(), base.getUTCMonth() - offset, 1));
+  return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}`;
+}
+
+export async function trends(monthsBack: number): Promise<TrendPointOut[]> {
+  const now = new Date();
+  const points: TrendPointOut[] = [];
+  for (let offset = monthsBack - 1; offset >= 0; offset--) {
+    const month = monthKeyBefore(now, offset);
+    const p = await profit(month);
+    points.push({
+      month, revenue: p.revenue, expenses: p.overhead, netProfit: p.netProfit, unitsSold: p.unitsSold,
+    });
+  }
+  return points;
 }
 
 export async function salesSummary(from: Date, to: Date, role: Role): Promise<SalesSummaryOut> {
