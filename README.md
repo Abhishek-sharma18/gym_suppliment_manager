@@ -63,6 +63,25 @@ Pages (all under the authenticated app shell, admin-only ones hidden from staff 
 - **Reports** (admin: profit, stock value, udhaar outstanding; both roles: sales summary).
 - **Users** (admin) — create/edit accounts, role, active status, password reset, deactivate.
 
+## End-to-end tests
+
+Playwright drives a real Chromium browser through the three signature flows: login/RBAC visibility
+(`e2e/auth.spec.ts`), recording a cash sale (`e2e/sale.spec.ts`), and taking a udhaar payment from a
+customer's khata (`e2e/khata.spec.ts`).
+
+Run it: `npm run e2e` (from the repo root).
+
+- **One-time setup:** `npx playwright install chromium` — downloads a Chromium build (~150 MB).
+- **Its own database:** the suite never touches `gymdb`. A global setup step derives an E2E
+  connection string from `backend/.env` (swapping `/gymdb` → `/gymdb_e2e`), drops that database,
+  and re-seeds it fresh before every run; a global teardown step drops it again afterwards.
+- **Its own ports:** the API runs on `5001` and the frontend (`next dev`) on `3001`, so the suite
+  can run alongside your normal `npm run dev:api` / `npm run dev:web` (ports 5000/3000) without
+  colliding. Playwright's `webServer` config starts and stops both processes automatically.
+- **Not part of `npm test`:** E2E tests need a network connection (Atlas) and a browser download,
+  so they're deliberately excluded from the plain `npm test` workspace suite — run `npm run e2e`
+  separately (e.g. in CI, as its own step, after the browser is installed).
+
 Design tokens: khata red / brass / warm paper palette, Bricolage Grotesque for page titles, IBM Plex Sans for body text, IBM Plex Mono for every money amount and invoice/batch number. Money totals (sale totals, udhaar balances, report KPIs) get the signature hand-ruled double-underline. See `frontend/src/lib/theme.ts` for the exact values.
 
 ## Environment variables
