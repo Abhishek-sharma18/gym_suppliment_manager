@@ -7,6 +7,11 @@ const nextConfig = {
   // "Another next dev server is already running". Playwright's webServer sets E2E_DIST_DIR;
   // normal dev (`npm run dev:web`) never sets it, so this is a no-op outside E2E.
   ...(process.env.E2E_DIST_DIR ? { distDir: process.env.E2E_DIST_DIR } : {}),
+  async rewrites() {
+    const target = process.env.API_PROXY_URL;
+    if (!target) return [];
+    return [{ source: '/api/:path*', destination: `${target}/api/:path*` }];
+  },
 };
 
 export default nextConfig;

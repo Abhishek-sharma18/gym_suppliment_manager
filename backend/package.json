@@ -4,6 +4,9 @@
   "description": "Backend API for the gym project (Express + MongoDB)",
   "main": "src/server.ts",
   "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
     "dev": "tsx watch src/server.ts",
     "start": "tsx src/server.ts",

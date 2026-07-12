@@ -1,6 +1,9 @@
 {
   "name": "gym-project",
   "private": true,
+  "engines": {
+    "node": ">=20"
+  },
   "workspaces": [
     "shared",
     "backend",
