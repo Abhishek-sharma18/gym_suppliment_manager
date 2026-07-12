@@ -16,6 +16,11 @@ test.describe('auth', () => {
   test('staff does not see the admin KPI or the Users nav item', async ({ page }) => {
     await login(page, STAFF);
 
+    // Anchor on a staff-visible element first so the negative assertions below
+    // can't pass vacuously against a not-yet-rendered dashboard.
+    await expect(page.getByText("Today's sales")).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Sales' })).toBeVisible();
+
     await expect(page.getByText("Today's take")).toHaveCount(0);
     await expect(page.getByRole('button', { name: 'Users' })).toHaveCount(0);
   });

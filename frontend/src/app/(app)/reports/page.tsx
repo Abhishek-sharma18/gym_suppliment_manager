@@ -312,7 +312,7 @@ function RecountSection() {
     },
     onSuccess: (data) => {
       setResult(data);
-      notify(`Recount complete - ${data.driftsFound} drifts fixed`);
+      notify(`Recount complete - ${data.driftsFound} drifts fixed, ${data.customersFixed} customers fixed`);
     },
     onError: (err: unknown) => {
       notify(err instanceof ApiClientError ? err.message : 'Recount failed', 'error');

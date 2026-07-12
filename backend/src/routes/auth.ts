@@ -30,6 +30,9 @@ const loginLimiter = rateLimit({
   max: () => Number(process.env.LOGIN_RATE_LIMIT) || 10,
   standardHeaders: true,
   legacyHeaders: false,
+  // Only failed attempts count toward the limit: brute-force protection is
+  // preserved while repeated successful dev logins never get throttled.
+  skipSuccessfulRequests: true,
   skip: () => process.env.NODE_ENV === 'test' && !process.env.LOGIN_RATE_LIMIT,
   handler: (_req, res) => {
     res.status(429).json({

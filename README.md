@@ -132,6 +132,7 @@ Design tokens: khata red / brass / warm paper palette, Bricolage Grotesque for p
 | File | Variable | What it is |
 |------|----------|------------|
 | `backend/.env` | `MONGO_URI` | Your MongoDB Atlas connection string (see below) |
+| `backend/.env` | `JWT_SECRET` | Secret for signing login tokens (required — server refuses to start without it) |
 | `backend/.env` | `PORT` | API port (default 5000) |
 | `backend/.env` | `CLIENT_URL` | Frontend origin allowed by CORS (default http://localhost:3000) |
 | `frontend/.env.local` | `NEXT_PUBLIC_API_URL` | Base URL the frontend uses to call the API |
