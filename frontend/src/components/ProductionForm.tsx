@@ -172,6 +172,10 @@ export function ProductionForm({ open, onClose }: ProductionFormProps) {
               itemSchema={productOut}
               getLabel={(p) => (p.variant ? `${p.name} (${p.variant})` : p.name)}
               extraFilter={(p) => p.bom.length > 0}
+              // extraFilter narrows AFTER the server page, so with the default page size
+              // (20) a catalog where few products have a recipe could render an empty
+              // no-search dropdown. 100 matches the old fixed-page behavior.
+              limit={100}
               value={selectedProduct}
               onChange={setSelectedProduct}
               label="Product"
