@@ -31,11 +31,16 @@ export function getE2eMongoUri() {
   if (!uri || uri.includes('your_mongodb_connection_string')) {
     throw new Error('MONGO_URI in backend/.env is a placeholder - cannot run E2E tests without a real Atlas URI.');
   }
-  if (!uri.includes('/gymdb')) {
-    throw new Error('Could not find the "/gymdb" database segment in MONGO_URI - refusing to guess an E2E URI.');
+
+  // Anchored: only replace "/gymdb" when it is the entire database path segment (i.e.
+  // followed by another "/", the "?" query string, or end of string) - never a prefix of a
+  // longer db name (/gymdb_prod) or an incidental substring elsewhere in the URI.
+  const e2eUri = uri.replace(/\/gymdb(?=[/?]|$)/, '/gymdb_e2e');
+  if (e2eUri === uri) {
+    throw new Error('backend/.env MONGO_URI does not contain a /gymdb database segment - cannot derive e2e database');
   }
 
-  return uri.replace('/gymdb', '/gymdb_e2e');
+  return e2eUri;
 }
 
 export const E2E_API_PORT = 5001;

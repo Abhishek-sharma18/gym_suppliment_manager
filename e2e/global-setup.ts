@@ -31,14 +31,15 @@ function runSeed(mongoUri: string): Promise<void> {
 export default async function globalSetup(): Promise<void> {
   const mongoUri = getE2eMongoUri();
 
-  // Defense in depth: never let this touch anything but the dedicated E2E database,
-  // even if getE2eMongoUri's derivation logic ever regresses.
-  if (!mongoUri.includes('/gymdb_e2e')) {
-    throw new Error('Refusing to run E2E global setup: derived URI does not target gymdb_e2e.');
-  }
-
   console.log('[e2e] Dropping gymdb_e2e (fresh slate for this run)...');
   await mongoose.connect(mongoUri);
+  // Defense in depth: assert the ACTUAL connected database name (as the driver parsed the
+  // URI), not a substring check on the URI string - never drop anything but the dedicated
+  // E2E database, even if getE2eMongoUri's derivation logic ever regresses.
+  if (mongoose.connection.name !== 'gymdb_e2e') {
+    await mongoose.disconnect();
+    throw new Error('Refusing to run E2E global setup: connected database is not gymdb_e2e.');
+  }
   await mongoose.connection.dropDatabase();
   await mongoose.disconnect();
 
