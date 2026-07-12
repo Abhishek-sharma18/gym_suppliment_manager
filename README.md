@@ -43,7 +43,7 @@ Route groups:
 - `expenses` - shop expenses (admin only)
 - `movements` - read-only stock ledger (stock_movements)
 - `reports` - stock, sales, and P&L summaries
-- `admin/recount` - recompute cached quantities/costs from the ledger (admin only)
+- `admin/recount` - recompute cached quantities/costs from the ledger (admin only). Not transactional under concurrent writes - run it when the shop is idle (2-user shop; documented tradeoff, not rebuilt).
 
 ## Frontend
 

@@ -25,6 +25,12 @@ describe('auth', () => {
     expect(res.body.error.code).toBe('BAD_CREDENTIALS');
   });
 
+  it('rejects an unknown email with the same 401 envelope (no account-existence leak)', async () => {
+    const res = await request(app).post('/api/auth/login').send({ email: 'nobody@test.local', password: 'whatever-123' });
+    expect(res.status).toBe(401);
+    expect(res.body.error.code).toBe('BAD_CREDENTIALS');
+  });
+
   it('GET /me requires auth and returns the logged-in user', async () => {
     expect((await request(app).get('/api/auth/me')).status).toBe(401);
     const agent = await loginAgent(app, STAFF);
