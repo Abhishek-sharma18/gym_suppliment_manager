@@ -8,6 +8,37 @@ gym project/
 └── backend/    → Express + Mongoose API                       → http://localhost:5000
 ```
 
+## Project status
+
+All planned phases are complete: the shared zod contract (Phase 0), the backend API (Phase 1a),
+the frontend (Phase 1b), and Phase 2 hardening/polish/E2E (see `docs/superpowers/plans/`).
+
+What exists:
+- `shared/` — the zod contract (schemas, enums, `*In`/`*Out` types) consumed by both apps.
+- `backend/` — Express 5 + Mongoose 9 API covering auth, users, materials, products, suppliers,
+  customers, purchases, production, sales/returns, payments, expenses, movements, reports, and
+  admin recount, with RBAC, transactional stock movements, and an immutable audit trail.
+- `frontend/` — Next.js 16 + MUI app covering every page listed under "Frontend" below, built
+  directly against the live API.
+- `e2e/` — Playwright browser tests for the three signature flows (auth/RBAC, a cash sale, a
+  udhaar payment), run against an isolated `gymdb_e2e` database.
+
+How to run it: see "Running the app" immediately below (two terminals: `npm run dev:api` and
+`npm run dev:web`), then log in with a seeded account (see "API" section for credentials).
+
+Test / e2e commands:
+- `npm test` (repo root) — unit + integration tests across all three workspaces (shared, backend,
+  frontend); no network or browser required.
+- `npm run typecheck` (repo root) — TypeScript project-reference typecheck for `shared` and
+  `backend` (the frontend's typecheck runs as part of `npm run build`, see below).
+- `npm run build --workspace frontend` — Next.js production build (also typechecks the frontend).
+- `npm run e2e` (repo root) — Playwright browser end-to-end suite; see "End-to-end tests" below.
+  Not part of `npm test` (needs a network connection and a downloaded browser).
+
+Seeded logins (`npm run seed --workspace backend`) — **change these before any real deployment**:
+- `admin@gym.local` / `Admin@123!` (role: admin)
+- `staff@gym.local` / `Staff@123!` (role: staff)
+
 ## Running the app
 
 Install once from the repo root: `npm install`
@@ -62,6 +93,18 @@ Pages (all under the authenticated app shell, admin-only ones hidden from staff 
 - **Expenses** (admin) — shop expenses by category.
 - **Reports** (admin: profit, stock value, udhaar outstanding; both roles: sales summary).
 - **Users** (admin) — create/edit accounts, role, active status, password reset, deactivate.
+
+## Tests
+
+Unit/integration tests run per-workspace with Vitest (backend also uses Supertest against an
+in-memory MongoDB via `mongodb-memory-server` — no Atlas connection needed).
+
+- `npm test` (repo root) — runs all three workspaces: `shared` (17 tests), `backend` (49 tests),
+  `frontend` (19 tests).
+- `npm run typecheck` (repo root) — `tsc --noEmit` for `shared` and `backend`.
+- `npm run build --workspace frontend` — also runs the frontend's TypeScript check.
+
+Browser end-to-end tests are separate — see the next section.
 
 ## End-to-end tests
 

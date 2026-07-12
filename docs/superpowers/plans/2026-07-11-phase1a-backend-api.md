@@ -2598,3 +2598,8 @@ export async function runRecount(): Promise<{ driftsFound: number; details: Drif
 - **Recount concurrency:** `runRecount()` aggregates then updates non-transactionally; concurrent traffic between aggregate and update can overwrite a fresh cache with a stale sum. Options: per-item transactional re-aggregate, or document "run when idle". Decide in Phase 2.
 - **Returns in profit reports:** `/reports/profit` and `/reports/sales-summary` ignore `returns[]` - revenue/COGS/unitsSold are overstated after returns. Spec section 6 is silent. Decide the accounting treatment in Phase 2.
 - Login timing side-channel, login rate-limiting, JWT_SECRET boot check, self-demotion via PATCH, ad-hoc response schemas ({ deleted: true } etc.), UTC day-boundary convention: recorded, low priority.
+
+### Status (2026-07-12)
+- **Recount concurrency:** kept as a documented run-when-idle decision, not rebuilt — see `docs/superpowers/plans/2026-07-12-phase2-completion.md` Task 1 item 5 (comment on `runRecount` + README API section note). Still non-transactional by design (2-user shop).
+- **Returns in profit reports:** DONE — `backend/src/services/reports.ts` (`returnsInRange`) deducts returns from revenue/COGS/unitsSold in `/reports/profit`, `/reports/sales-summary`, and the dashboard. This was closed by the returns-accounting work that predates the Phase 2 completion plan, not by it.
+- **Login timing, rate-limiting, JWT_SECRET boot check, self-demotion via PATCH:** DONE — see `docs/superpowers/plans/2026-07-12-phase2-completion.md` Task 1. Ad-hoc response schemas (`{ deleted: true }` etc.) and the UTC day-boundary convention remain open/low priority, out of Phase 2 scope.

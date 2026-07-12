@@ -472,3 +472,10 @@ Fixed before merge: AppShell now redirects to /login only on 401 (other errors s
 ### Spec deviation (recorded): spec Sec 9 says admin-only pages "redirect staff away"; the implementation renders an inline 403 state instead (equal protection - the API 403s everything; better UX). Accepted.
 
 Addendum (final re-review): two more Phase 2 ticket lines - failed-logout bounce gives no feedback (notify 'Logout failed - try again'; qc.clear only runs on success); sub-paisa rounding divergence between client one-shot round2 and server per-line rounding (only visible failure mode already surfaced via the customerId FormHelperText fallback).
+
+### Status (2026-07-12)
+- Limit-100 lookup seam: DONE for the sales-page customer filter and ProductionForm's product picker (both now use the new `ServerSearchSelect`) — see `docs/superpowers/plans/2026-07-12-phase2-completion.md` Task 2 item 1. The "showing first N" warning for the still-fixed-limit lookups (BomEditor, PurchaseForm, detail-dialog name maps) was a "consider" nice-to-have and was not built; remains open.
+- Self-demotion guard: DONE — see the same plan's Task 1.
+- enumLabel acronym sweep, filtered-empty EmptyState copy, staff all-em-dash cost columns, and take-payment button disabled until customer detail loads: all DONE — see Task 3.
+- Index-keyed row-error staleness after add/remove, and reports invalidation on transactional mutations (conditional ticket): not addressed in Phase 2; remain open.
+- Addendum items: failed-logout notify DONE (Task 3). Sub-paisa rounding divergence between client one-shot round2 and server per-line rounding: not addressed in Phase 2; remains open (only surfaces via the existing customerId FormHelperText fallback).
