@@ -110,7 +110,7 @@ One MUI layout shell (AppBar + responsive Drawer), role-filtered navigation, mob
 
 Pages: **Login** → **Dashboard** (admin: today's sales ₹, stock value, low-stock, expiring-soon, udhaar outstanding; staff: stock/entry KPIs only) → **Sales** (fastest screen: product search, qty steppers, running total, payment split, minimal taps) → **Production** (pick product + batch size → BoM auto-fills consumption, editable actuals + wastage) → **Purchases** → **Materials** → **Products & recipes (BoM editor)** → **Customers / udhaar ledger** → **Expenses** (admin) → **Reports** (admin sees money; staff sees stock) → **Users** (admin).
 
-Route guard: `/api/auth/me` check in the shell; unauthenticated → login; admin-only pages redirect staff away.
+Route guard: `/api/auth/me` check in the shell; unauthenticated → login; admin-only pages redirect staff away. (Implementation note: admin-only pages render an inline 403 state rather than redirecting - accepted deviation, 2026-07-12.)
 
 ## 10. Testing & seed
 
@@ -123,6 +123,7 @@ Route guard: `/api/auth/me` check in the shell; unauthenticated → login; admin
 - **Phase 0 — Contract & workspace:** root workspaces, TS conversion of both apps, entire `shared` package (every entity + request/response schema, enums, route list), CLAUDE.md.
 - **Phase 1 — Parallel build:** backend (models → services → routes, with tests) and frontend (all screens against the shared contract with MSW mocks) built independently against the Phase 0 contract.
 - **Phase 2 — Integration:** swap MSW for the real API, run seed, fix drift, verify end-to-end flows (login → purchase → production → sale → reports), full test pass.
+- **Amendment (Phase 1b, recorded after the fact):** the backend landed first, so Phase 1b's frontend build (10 tasks, branch `phase1b-frontend`) was built directly against the live API from the start rather than against MSW mocks — `msw` was never wired up and was dropped as a dependency. Each frontend task's verification bar (`npm run build --workspace frontend`) and Task 10's live PowerShell smoke test (backend + frontend booted together, real Atlas data, session login, full monorepo test/typecheck) stood in for the MSW-then-swap flow this section originally described.
 
 ## 12. Non-negotiables (goes into CLAUDE.md)
 

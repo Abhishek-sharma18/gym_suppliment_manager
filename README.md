@@ -45,6 +45,26 @@ Route groups:
 - `reports` - stock, sales, and P&L summaries
 - `admin/recount` - recompute cached quantities/costs from the ledger (admin only)
 
+## Frontend
+
+Next.js (App Router) + MUI, built directly against the live API described above (Phase 1b — see `docs/superpowers/specs/2026-07-11-gym-inventory-design.md` §11).
+
+Run it: `npm run dev:web` → http://localhost:3000 (needs the backend running too; see above). Log in with one of the seeded accounts.
+
+Pages (all under the authenticated app shell, admin-only ones hidden from staff in the nav):
+- **Login** — email/password against `/api/auth/login`.
+- **Dashboard** — today's KPIs; admin sees money figures, staff sees stock-only figures.
+- **Sales** — fast sale entry (product search, qty steppers, running total, payment split) + sales history with returns.
+- **Production** — record batches (BoM auto-fills consumption, editable actuals/wastage) + batch history.
+- **Purchases** — record stock-in from suppliers + purchase history.
+- **Materials** / **Products** — raw material and finished product master data, stock, and (products) the BoM recipe editor.
+- **Suppliers** / **Customers** — partner master data; Customers also has the udhaar ledger drawer and "take payment".
+- **Expenses** (admin) — shop expenses by category.
+- **Reports** (admin: profit, stock value, udhaar outstanding; both roles: sales summary).
+- **Users** (admin) — create/edit accounts, role, active status, password reset, deactivate.
+
+Design tokens: khata red / brass / warm paper palette, Bricolage Grotesque for page titles, IBM Plex Sans for body text, IBM Plex Mono for every money amount and invoice/batch number. Money totals (sale totals, udhaar balances, report KPIs) get the signature hand-ruled double-underline. See `frontend/src/lib/theme.ts` for the exact values.
+
 ## Environment variables
 
 | File | Variable | What it is |
