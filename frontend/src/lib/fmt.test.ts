@@ -1,5 +1,25 @@
 import { describe, expect, it } from 'vitest';
-import { enumLabel, localDateValue, monthValue } from './fmt';
+import {
+  compactInr, enumLabel, localDateValue, monthValue,
+} from './fmt';
+
+describe('compactInr', () => {
+  it('renders sub-thousand values plainly', () => {
+    expect(compactInr(500)).toBe('₹500');
+  });
+
+  it('compacts thousands with a K suffix', () => {
+    expect(compactInr(10000)).toBe('₹10K');
+  });
+
+  it('compacts lakhs with an L suffix', () => {
+    expect(compactInr(250000)).toBe('₹2.5L');
+  });
+
+  it('keeps the sign for a negative (loss) tick value', () => {
+    expect(compactInr(-25000)).toBe('-₹25K');
+  });
+});
 
 describe('monthValue', () => {
   it('uses the LOCAL month, not the UTC month, just after local midnight on the 1st', () => {

@@ -1,8 +1,16 @@
 const inrFmt = new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 2 });
+const compactInrFmt = new Intl.NumberFormat('en-IN', {
+  style: 'currency', currency: 'INR', notation: 'compact', maximumFractionDigits: 1,
+});
 const dateFmtIntl = new Intl.DateTimeFormat('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
 export const EM_DASH = '—';
 
 export const inr = (n: number | undefined): string => (n === undefined ? EM_DASH : inrFmt.format(n));
+/**
+ * Compact en-IN currency for chart axis ticks — "₹10K", "₹2.5L", "₹1Cr" — so a ₹ y-axis
+ * with lakh/crore-scale values doesn't overflow the tick label width.
+ */
+export const compactInr = (n: number): string => compactInrFmt.format(n);
 export const qtyFmt = (n: number, unit: string): string => `${n.toLocaleString('en-IN')} ${unit}`;
 export const dateFmt = (d: Date): string => dateFmtIntl.format(d);
 /**

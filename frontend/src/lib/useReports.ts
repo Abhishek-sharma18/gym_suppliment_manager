@@ -3,7 +3,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { z } from 'zod';
 import {
-  dashboardOut, profitReportOut, salesSummaryOut, stockValueOut, udhaarEntry, type DashboardOut,
+  dashboardOut, profitReportOut, salesSummaryOut, stockValueOut, trendPoint, udhaarEntry, type DashboardOut,
 } from '@gym/shared';
 import { getJson } from './api';
 
@@ -19,6 +19,9 @@ export type SalesSummaryOut = z.infer<typeof salesSummaryOut>;
 
 const udhaarReportOut = z.array(udhaarEntry);
 export type UdhaarReportOut = z.infer<typeof udhaarReportOut>;
+
+const trendsOut = z.array(trendPoint);
+export type TrendsOut = z.infer<typeof trendsOut>;
 
 /**
  * Non-list report endpoints ({ data: <value> }, not { data, page, limit, total }) — each
@@ -53,6 +56,17 @@ export function useUdhaarReport() {
   return useQuery<UdhaarReportOut>({
     queryKey: ['reports', 'udhaar'],
     queryFn: async () => udhaarReportOut.parse((await getJson<Envelope<unknown>>('/reports/udhaar')).data),
+  });
+}
+
+/** Last `months` monthly points (admin-only), oldest first — feeds the Trends chart. */
+export function useTrends(months = 12) {
+  return useQuery<TrendsOut>({
+    queryKey: ['reports', 'trends', months],
+    queryFn: async () => {
+      const qs = new URLSearchParams({ months: String(months) }).toString();
+      return trendsOut.parse((await getJson<Envelope<unknown>>(`/reports/trends?${qs}`)).data);
+    },
   });
 }
 
