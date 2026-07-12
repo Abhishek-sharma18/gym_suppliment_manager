@@ -18,6 +18,14 @@ import { reportsRouter } from './routes/reports';
 export function createApp(): express.Express {
   const app = express();
 
+  if (process.env.NODE_ENV === 'production') {
+    // Two proxy hops sit in front of Express in production:
+    //   browser -> Vercel rewrite proxy -> Render front door -> Express.
+    // Both must be trusted so req.ip (the login rate limiter key) resolves to
+    // the real client IP instead of Vercel's egress IP.
+    app.set('trust proxy', 2);
+  }
+
   app.use(cors({
     origin: process.env.CLIENT_URL || 'http://localhost:3000',
     credentials: true,
