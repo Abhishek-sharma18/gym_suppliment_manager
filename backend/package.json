@@ -24,6 +24,7 @@
     "express-rate-limit": "^8.5.2",
     "jsonwebtoken": "^9.0.3",
     "mongoose": "^9.7.4",
+    "tsx": "^4.23.0",
     "zod": "^4.4.3"
   },
   "devDependencies": {
@@ -36,7 +37,6 @@
     "@types/supertest": "^7.2.0",
     "mongodb-memory-server": "^11.2.0",
     "supertest": "^7.2.2",
-    "tsx": "^4.23.0",
     "typescript": "^6.0.3",
     "vitest": "^4.1.10"
   }

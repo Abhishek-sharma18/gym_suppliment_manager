@@ -3,7 +3,9 @@ services:
     name: gym-khata-api
     runtime: node
     plan: free
-    # npm >= 7 (Node 20) installs devDependencies even with NODE_ENV=production - required: tsx runs the server.
+    # NOTE: with NODE_ENV=production, npm OMITS devDependencies by default.
+    # tsx (the runtime that executes the TS server) therefore lives in backend's
+    # regular dependencies, not devDependencies. Do not move it back.
     buildCommand: npm install
     startCommand: npm run start --workspace backend
     healthCheckPath: /api/health
