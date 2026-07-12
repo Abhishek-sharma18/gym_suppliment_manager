@@ -21,10 +21,17 @@ export const monthValue = (d: Date): string => `${d.getFullYear()}-${String(d.ge
 export const localDateValue = (d: Date): string =>
   `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 
+// Enum words that stay upper-cased instead of being title-cased — e.g. the PaymentMode
+// value "UPI" reads as "Upi" under plain title-casing, which isn't a real word.
+const ENUM_ACRONYMS = new Set(['UPI']);
+
 /** "PURCHASE_IN" -> "Purchase in" — humanizes @gym/shared enum values for chip labels. */
 export const enumLabel = (value: string): string =>
   value
-    .toLowerCase()
     .split('_')
-    .map((word, i) => (i === 0 ? word.charAt(0).toUpperCase() + word.slice(1) : word))
+    .map((word, i) => {
+      if (ENUM_ACRONYMS.has(word)) return word;
+      const lower = word.toLowerCase();
+      return i === 0 ? lower.charAt(0).toUpperCase() + lower.slice(1) : lower;
+    })
     .join(' ');

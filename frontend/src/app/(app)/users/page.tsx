@@ -236,7 +236,11 @@ export default function UsersPage() {
       </Box>
 
       {!isLoading && rows.length === 0 ? (
-        <EmptyState message="No users yet — add the first one" actionLabel="Add user" onAction={openCreate} />
+        <EmptyState
+          message={search ? 'No users match your search' : 'No users yet — add the first one'}
+          actionLabel={search ? undefined : 'Add user'}
+          onAction={search ? undefined : openCreate}
+        />
       ) : (
         <DataTable<UserOut>
           rows={rows}

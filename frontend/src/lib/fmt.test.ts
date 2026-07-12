@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { localDateValue, monthValue } from './fmt';
+import { enumLabel, localDateValue, monthValue } from './fmt';
 
 describe('monthValue', () => {
   it('uses the LOCAL month, not the UTC month, just after local midnight on the 1st', () => {
@@ -45,5 +45,23 @@ describe('localDateValue', () => {
     const justBeforeMidnight = new Date(2026, 6, 11, 23, 30, 0);
 
     expect(localDateValue(justBeforeMidnight)).toBe('2026-07-11');
+  });
+});
+
+describe('enumLabel', () => {
+  it('title-cases a simple single-word enum value', () => {
+    expect(enumLabel('CASH')).toBe('Cash');
+  });
+
+  it('humanizes a snake-case enum value', () => {
+    expect(enumLabel('PURCHASE_IN')).toBe('Purchase in');
+  });
+
+  it('keeps a recognized acronym upper-cased instead of title-casing it', () => {
+    expect(enumLabel('UPI')).toBe('UPI');
+  });
+
+  it('keeps a recognized acronym upper-cased inside a compound value', () => {
+    expect(enumLabel('UPI_REFUND')).toBe('UPI refund');
   });
 });

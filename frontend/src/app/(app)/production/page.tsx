@@ -67,6 +67,7 @@ export default function ProductionPage() {
     from: fromDate || undefined,
     to: toDate || undefined,
   });
+  const anyFilterActive = Boolean(productFilter || fromDate || toDate);
 
   // Products/materials are only ever referenced by id on a batch; both lookups are small
   // enough to load in full and resolve locally, for the product filter and name/line lookups.
@@ -169,7 +170,11 @@ export default function ProductionPage() {
       </Stack>
 
       {!isLoading && rows.length === 0 ? (
-        <EmptyState message="No batches yet — record the first one" actionLabel="New batch" onAction={() => setFormOpen(true)} />
+        <EmptyState
+          message={anyFilterActive ? 'No batches match these filters' : 'No batches yet — record the first one'}
+          actionLabel={anyFilterActive ? undefined : 'New batch'}
+          onAction={anyFilterActive ? undefined : () => setFormOpen(true)}
+        />
       ) : (
         <DataTable<ProductionOut>
           rows={rows}
@@ -187,7 +192,11 @@ export default function ProductionPage() {
       <Dialog open={detailTarget !== null} onClose={() => setDetailTarget(null)} maxWidth="sm" fullWidth>
         <DialogTitle>Batch detail</DialogTitle>
         <DialogContent>
-          {detailTarget && (
+          {detailTarget && (() => {
+            // Admin always qualifies (every line carries costPerUseUnit); staff never does,
+            // since the API strips the field entirely for that role.
+            const showCost = detailTarget.materialsConsumed.some((l) => l.costPerUseUnit !== undefined);
+            return (
             <Stack spacing={2}>
               <Stack direction="row" spacing={1} sx={{ flexWrap: 'wrap' }}>
                 <Chip label={detailTarget.batchNo} size="small" sx={{ fontFamily: monoFamily }} />
@@ -206,7 +215,7 @@ export default function ProductionPage() {
                       <TableCell align="right">Planned</TableCell>
                       <TableCell align="right">Actual</TableCell>
                       <TableCell align="right">Wastage</TableCell>
-                      <TableCell align="right">Cost / unit</TableCell>
+                      {showCost && <TableCell align="right">Cost / unit</TableCell>}
                     </TableRow>
                   </TableHead>
                   <TableBody>
@@ -225,9 +234,11 @@ export default function ProductionPage() {
                           <TableCell align="right" sx={{ fontFamily: monoFamily }}>
                             {qtyFmt(line.wastageQty, unit)}
                           </TableCell>
-                          <TableCell align="right">
-                            <MoneyText value={line.costPerUseUnit} />
-                          </TableCell>
+                          {showCost && (
+                            <TableCell align="right">
+                              <MoneyText value={line.costPerUseUnit} />
+                            </TableCell>
+                          )}
                         </TableRow>
                       );
                     })}
@@ -264,7 +275,8 @@ export default function ProductionPage() {
                 </Stack>
               )}
             </Stack>
-          )}
+            );
+          })()}
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2 }}>
           <Button onClick={() => setDetailTarget(null)}>Close</Button>

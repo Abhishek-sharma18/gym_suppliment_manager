@@ -233,9 +233,9 @@ export default function MaterialsPage() {
 
       {!isLoading && rows.length === 0 ? (
         <EmptyState
-          message="No materials yet — add the first one"
-          actionLabel={isAdmin ? 'Add material' : undefined}
-          onAction={isAdmin ? openCreate : undefined}
+          message={search ? 'No materials match your search' : 'No materials yet — add the first one'}
+          actionLabel={!search && isAdmin ? 'Add material' : undefined}
+          onAction={!search && isAdmin ? openCreate : undefined}
         />
       ) : (
         <DataTable<MaterialOut>

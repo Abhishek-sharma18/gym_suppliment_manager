@@ -16,6 +16,7 @@ import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
 import TableContainer from '@mui/material/TableContainer';
 import Skeleton from '@mui/material/Skeleton';
+import CircularProgress from '@mui/material/CircularProgress';
 import CloseIcon from '@mui/icons-material/Close';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
@@ -65,7 +66,7 @@ export function CustomerLedgerDrawer({ customerId, onClose }: CustomerLedgerDraw
   const [paymentsPage, setPaymentsPage] = useState(1);
   const [payOpen, setPayOpen] = useState(false);
 
-  const { data: customer } = useQuery({
+  const { data: customer, isLoading: customerLoading } = useQuery({
     queryKey: ['customers', 'detail', customerId],
     queryFn: async () => customerOut.parse((await getJson<{ data: unknown }>(`/customers/${customerId}`)).data),
   });
@@ -201,7 +202,13 @@ export function CustomerLedgerDrawer({ customerId, onClose }: CustomerLedgerDraw
         <Divider />
 
         <Box sx={{ px: 3, py: 2 }}>
-          <Button variant="contained" fullWidth onClick={() => setPayOpen(true)}>
+          <Button
+            variant="contained"
+            fullWidth
+            disabled={customerLoading}
+            startIcon={customerLoading ? <CircularProgress size={16} color="inherit" /> : undefined}
+            onClick={() => setPayOpen(true)}
+          >
             Take payment
           </Button>
         </Box>

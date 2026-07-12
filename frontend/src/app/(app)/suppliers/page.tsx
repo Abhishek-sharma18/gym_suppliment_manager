@@ -198,9 +198,9 @@ export default function SuppliersPage() {
 
       {!isLoading && rows.length === 0 ? (
         <EmptyState
-          message="No suppliers yet — add the first one"
-          actionLabel={isAdmin ? 'Add supplier' : undefined}
-          onAction={isAdmin ? openCreate : undefined}
+          message={search ? 'No suppliers match your search' : 'No suppliers yet — add the first one'}
+          actionLabel={!search && isAdmin ? 'Add supplier' : undefined}
+          onAction={!search && isAdmin ? openCreate : undefined}
         />
       ) : (
         <DataTable<SupplierOut>

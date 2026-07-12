@@ -202,9 +202,9 @@ export default function CustomersPage() {
 
       {!isLoading && rows.length === 0 ? (
         <EmptyState
-          message="No customers yet — add the first one"
-          actionLabel={isAdmin ? 'Add customer' : undefined}
-          onAction={isAdmin ? openCreate : undefined}
+          message={search ? 'No customers match your search' : 'No customers yet — add the first one'}
+          actionLabel={!search && isAdmin ? 'Add customer' : undefined}
+          onAction={!search && isAdmin ? openCreate : undefined}
         />
       ) : (
         <DataTable<CustomerOut>

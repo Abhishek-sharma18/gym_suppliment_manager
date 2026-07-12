@@ -8,7 +8,7 @@ import ToggleButtonGroup from '@mui/material/ToggleButtonGroup';
 import Stack from '@mui/material/Stack';
 import { paymentCreate, PAYMENT_MODES, type PaymentMode } from '@gym/shared';
 import { postJson } from '@/lib/api';
-import { inr } from '@/lib/fmt';
+import { enumLabel, inr } from '@/lib/fmt';
 import { FormDialog } from './FormDialog';
 import { useNotify } from './SnackbarProvider';
 
@@ -99,7 +99,7 @@ export function TakePaymentDialog({ open, customerId, owed, onClose }: TakePayme
           >
             {PAYMENT_MODES.map((m) => (
               <ToggleButton key={m} value={m}>
-                {m}
+                {enumLabel(m)}
               </ToggleButton>
             ))}
           </ToggleButtonGroup>

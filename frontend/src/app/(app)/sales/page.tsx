@@ -42,6 +42,7 @@ export default function SalesPage() {
     from: fromDate || undefined,
     to: toDate || undefined,
   });
+  const anyFilterActive = Boolean(customerFilter || fromDate || toDate);
 
   // Separate from the filter's own server-searched fetch below — this resolves whichever
   // customer names the current page of sales rows references, not a search-scoped page.
@@ -129,7 +130,11 @@ export default function SalesPage() {
       </Stack>
 
       {!isLoading && rows.length === 0 ? (
-        <EmptyState message="No sales yet — the form above records the first one" />
+        <EmptyState
+          message={
+            anyFilterActive ? 'No sales match these filters' : 'No sales yet — the form above records the first one'
+          }
+        />
       ) : (
         <DataTable<SaleOut>
           rows={rows}
