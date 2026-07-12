@@ -27,7 +27,7 @@ import {
 } from '@gym/shared';
 import { postJson } from '@/lib/api';
 import { useListQuery } from '@/lib/useListQuery';
-import { localDateValue } from '@/lib/fmt';
+import { enumLabel, localDateValue } from '@/lib/fmt';
 import { FormDialog } from './FormDialog';
 import { MoneyText } from './MoneyText';
 import { useNotify } from './SnackbarProvider';
@@ -189,7 +189,7 @@ export function PurchaseForm({ open, onClose }: PurchaseFormProps) {
             >
               {PAYMENT_MODES.map((m) => (
                 <ToggleButton key={m} value={m}>
-                  {m}
+                  {enumLabel(m)}
                 </ToggleButton>
               ))}
             </ToggleButtonGroup>

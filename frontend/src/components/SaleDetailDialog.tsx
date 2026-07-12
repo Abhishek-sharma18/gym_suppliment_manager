@@ -58,6 +58,9 @@ export function SaleDetailDialog({ saleId, onClose }: SaleDetailDialogProps) {
   const customerMap = new Map(customers.map((c) => [c._id, c]));
 
   const canReturn = sale ? returnableLines(sale, productMap).length > 0 : false;
+  // Admin always qualifies (every row carries unitCostAtSale); staff never does, since the
+  // API strips the field entirely — so this doubles as the admin/staff column-visibility gate.
+  const showCost = sale ? sale.items.some((l) => l.unitCostAtSale !== undefined) : false;
 
   return (
     <>
@@ -89,7 +92,7 @@ export function SaleDetailDialog({ saleId, onClose }: SaleDetailDialogProps) {
                       <TableCell>Product</TableCell>
                       <TableCell align="right">Qty</TableCell>
                       <TableCell align="right">Unit price</TableCell>
-                      <TableCell align="right">Cost / unit</TableCell>
+                      {showCost && <TableCell align="right">Cost / unit</TableCell>}
                       <TableCell align="right">Line total</TableCell>
                     </TableRow>
                   </TableHead>
@@ -103,9 +106,11 @@ export function SaleDetailDialog({ saleId, onClose }: SaleDetailDialogProps) {
                         <TableCell align="right">
                           <MoneyText value={line.unitPrice} />
                         </TableCell>
-                        <TableCell align="right">
-                          <MoneyText value={line.unitCostAtSale} />
-                        </TableCell>
+                        {showCost && (
+                          <TableCell align="right">
+                            <MoneyText value={line.unitCostAtSale} />
+                          </TableCell>
+                        )}
                         <TableCell align="right">
                           <MoneyText value={line.lineTotal} />
                         </TableCell>

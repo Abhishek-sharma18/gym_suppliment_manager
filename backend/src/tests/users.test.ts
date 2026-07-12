@@ -60,6 +60,21 @@ describe('users admin CRUD', () => {
     expect(renamed.body.data.isActive).toBe(true);
   });
 
+  it('admin cannot demote themselves via PATCH, but other self-edits still work', async () => {
+    const admin = await loginAgent(app, ADMIN);
+    const me = await admin.get('/api/auth/me');
+    const myId = me.body.data._id;
+
+    const blocked = await admin.patch(`/api/users/${myId}`).send({ role: 'staff' });
+    expect(blocked.status).toBe(400);
+    expect(blocked.body.error.code).toBe('SELF_DEMOTE');
+
+    const renamed = await admin.patch(`/api/users/${myId}`).send({ name: 'Y' });
+    expect(renamed.status).toBe(200);
+    expect(renamed.body.data.name).toBe('Y');
+    expect(renamed.body.data.role).toBe('admin');
+  });
+
   it('creating a user with an email that already exists returns 409 DUPLICATE', async () => {
     const admin = await loginAgent(app, ADMIN);
     const res = await admin.post('/api/users').send({

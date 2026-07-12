@@ -8,6 +8,37 @@ gym project/
 └── backend/    → Express + Mongoose API                       → http://localhost:5000
 ```
 
+## Project status
+
+All planned phases are complete: the shared zod contract (Phase 0), the backend API (Phase 1a),
+the frontend (Phase 1b), and Phase 2 hardening/polish/E2E (see `docs/superpowers/plans/`).
+
+What exists:
+- `shared/` — the zod contract (schemas, enums, `*In`/`*Out` types) consumed by both apps.
+- `backend/` — Express 5 + Mongoose 9 API covering auth, users, materials, products, suppliers,
+  customers, purchases, production, sales/returns, payments, expenses, movements, reports, and
+  admin recount, with RBAC, transactional stock movements, and an immutable audit trail.
+- `frontend/` — Next.js 16 + MUI app covering every page listed under "Frontend" below, built
+  directly against the live API.
+- `e2e/` — Playwright browser tests for the three signature flows (auth/RBAC, a cash sale, a
+  udhaar payment), run against an isolated `gymdb_e2e` database.
+
+How to run it: see "Running the app" immediately below (two terminals: `npm run dev:api` and
+`npm run dev:web`), then log in with a seeded account (see "API" section for credentials).
+
+Test / e2e commands:
+- `npm test` (repo root) — unit + integration tests across all three workspaces (shared, backend,
+  frontend); no network or browser required.
+- `npm run typecheck` (repo root) — TypeScript project-reference typecheck for `shared` and
+  `backend` (the frontend's typecheck runs as part of `npm run build`, see below).
+- `npm run build --workspace frontend` — Next.js production build (also typechecks the frontend).
+- `npm run e2e` (repo root) — Playwright browser end-to-end suite; see "End-to-end tests" below.
+  Not part of `npm test` (needs a network connection and a downloaded browser).
+
+Seeded logins (`npm run seed --workspace backend`) — **change these before any real deployment**:
+- `admin@gym.local` / `Admin@123!` (role: admin)
+- `staff@gym.local` / `Staff@123!` (role: staff)
+
 ## Running the app
 
 Install once from the repo root: `npm install`
@@ -43,7 +74,7 @@ Route groups:
 - `expenses` - shop expenses (admin only)
 - `movements` - read-only stock ledger (stock_movements)
 - `reports` - stock, sales, and P&L summaries
-- `admin/recount` - recompute cached quantities/costs from the ledger (admin only)
+- `admin/recount` - recompute cached quantities/costs from the ledger (admin only). Not transactional under concurrent writes - run it when the shop is idle (2-user shop; documented tradeoff, not rebuilt).
 
 ## Frontend
 
@@ -63,6 +94,37 @@ Pages (all under the authenticated app shell, admin-only ones hidden from staff 
 - **Reports** (admin: profit, stock value, udhaar outstanding; both roles: sales summary).
 - **Users** (admin) — create/edit accounts, role, active status, password reset, deactivate.
 
+## Tests
+
+Unit/integration tests run per-workspace with Vitest (backend also uses Supertest against an
+in-memory MongoDB via `mongodb-memory-server` — no Atlas connection needed).
+
+- `npm test` (repo root) — runs all three workspaces: `shared` (17 tests), `backend` (49 tests),
+  `frontend` (19 tests).
+- `npm run typecheck` (repo root) — `tsc --noEmit` for `shared` and `backend`.
+- `npm run build --workspace frontend` — also runs the frontend's TypeScript check.
+
+Browser end-to-end tests are separate — see the next section.
+
+## End-to-end tests
+
+Playwright drives a real Chromium browser through the three signature flows: login/RBAC visibility
+(`e2e/auth.spec.ts`), recording a cash sale (`e2e/sale.spec.ts`), and taking a udhaar payment from a
+customer's khata (`e2e/khata.spec.ts`).
+
+Run it: `npm run e2e` (from the repo root).
+
+- **One-time setup:** `npx playwright install chromium` — downloads a Chromium build (~150 MB).
+- **Its own database:** the suite never touches `gymdb`. A global setup step derives an E2E
+  connection string from `backend/.env` (swapping `/gymdb` → `/gymdb_e2e`), drops that database,
+  and re-seeds it fresh before every run; a global teardown step drops it again afterwards.
+- **Its own ports:** the API runs on `5001` and the frontend (`next dev`) on `3001`, so the suite
+  can run alongside your normal `npm run dev:api` / `npm run dev:web` (ports 5000/3000) without
+  colliding. Playwright's `webServer` config starts and stops both processes automatically.
+- **Not part of `npm test`:** E2E tests need a network connection (Atlas) and a browser download,
+  so they're deliberately excluded from the plain `npm test` workspace suite — run `npm run e2e`
+  separately (e.g. in CI, as its own step, after the browser is installed).
+
 Design tokens: khata red / brass / warm paper palette, Bricolage Grotesque for page titles, IBM Plex Sans for body text, IBM Plex Mono for every money amount and invoice/batch number. Money totals (sale totals, udhaar balances, report KPIs) get the signature hand-ruled double-underline. See `frontend/src/lib/theme.ts` for the exact values.
 
 ## Environment variables
@@ -70,6 +132,7 @@ Design tokens: khata red / brass / warm paper palette, Bricolage Grotesque for p
 | File | Variable | What it is |
 |------|----------|------------|
 | `backend/.env` | `MONGO_URI` | Your MongoDB Atlas connection string (see below) |
+| `backend/.env` | `JWT_SECRET` | Secret for signing login tokens (required — server refuses to start without it) |
 | `backend/.env` | `PORT` | API port (default 5000) |
 | `backend/.env` | `CLIENT_URL` | Frontend origin allowed by CORS (default http://localhost:3000) |
 | `frontend/.env.local` | `NEXT_PUBLIC_API_URL` | Base URL the frontend uses to call the API |

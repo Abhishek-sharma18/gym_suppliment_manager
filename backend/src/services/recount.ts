@@ -31,6 +31,10 @@ async function recomputeCache(
   }
 }
 
+// NOTE: recount is not transactional against concurrent writes - it reads and
+// rewrites caches in separate steps, so a purchase/sale/production write that
+// lands mid-recount can be clobbered or missed. Decision: document, don't
+// rebuild (2-user shop) - run recount when the shop is idle (e.g. after close).
 export async function runRecount(): Promise<{ driftsFound: number; details: Drift[]; customersFixed: number }> {
   const sums = await StockMovement.aggregate<{ _id: { itemKind: string; itemId: unknown }; qty: number }>([
     { $group: { _id: { itemKind: '$itemKind', itemId: '$itemId' }, qty: { $sum: '$qty' } } },

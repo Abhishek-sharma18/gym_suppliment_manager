@@ -87,6 +87,7 @@ export default function ExpensesPage() {
     from: fromDate || undefined,
     to: toDate || undefined,
   };
+  const anyFilterActive = Boolean(categoryFilter || fromDate || toDate);
 
   const { rows, total, isLoading, error } = useListQuery('expenses', expenseOut, {
     ...filterParams,
@@ -242,7 +243,11 @@ export default function ExpensesPage() {
       </Stack>
 
       {!isLoading && rows.length === 0 ? (
-        <EmptyState message="No expenses yet — add the first one" actionLabel="Add expense" onAction={openCreate} />
+        <EmptyState
+          message={anyFilterActive ? 'No expenses match these filters' : 'No expenses yet — add the first one'}
+          actionLabel={anyFilterActive ? undefined : 'Add expense'}
+          onAction={anyFilterActive ? undefined : openCreate}
+        />
       ) : (
         <>
           <DataTable<ExpenseOut>

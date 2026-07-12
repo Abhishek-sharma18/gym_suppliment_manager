@@ -34,7 +34,7 @@ import { postJson, ApiClientError } from '@/lib/api';
 import { useListQuery } from '@/lib/useListQuery';
 import { useDebouncedValue } from '@/lib/useDebouncedValue';
 import { zodErrorToFields } from '@/lib/zodFields';
-import { localDateValue } from '@/lib/fmt';
+import { enumLabel, localDateValue } from '@/lib/fmt';
 import { monoFamily } from '@/lib/theme';
 import { MoneyText } from './MoneyText';
 import { useNotify } from './SnackbarProvider';
@@ -313,7 +313,7 @@ export function SaleEntry() {
             >
               {PAYMENT_MODES.map((m) => (
                 <ToggleButton key={m} value={m} sx={{ minHeight: 40 }}>
-                  {m}
+                  {enumLabel(m)}
                 </ToggleButton>
               ))}
             </ToggleButtonGroup>

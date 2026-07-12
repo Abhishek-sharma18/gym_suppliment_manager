@@ -8,6 +8,7 @@ npm workspaces: `shared/` (zod contract — schemas, enums, types), `backend/` (
 
 - `npm run dev:api` / `npm run dev:web` — start apps (from repo root)
 - `npm run typecheck` / `npm test` — all workspaces
+- `npm run e2e` — Playwright browser end-to-end suite (own `gymdb_e2e` database, ports 3001/5001; not part of `npm test`)
 - DB: MongoDB Atlas, db `gymdb`, connection string in `backend/.env` (never commit)
 
 ## Non-negotiables

@@ -55,6 +55,7 @@ export default function PurchasesPage() {
     from: fromDate || undefined,
     to: toDate || undefined,
   });
+  const anyFilterActive = Boolean(supplierFilter || fromDate || toDate);
 
   // Suppliers/materials are only ever referenced by id on a purchase; both lookups are
   // small enough (same 100-row cap BomEditor uses for materials) to load in full and
@@ -143,7 +144,11 @@ export default function PurchasesPage() {
       </Stack>
 
       {!isLoading && rows.length === 0 ? (
-        <EmptyState message="No purchases yet — record the first one" actionLabel="Record purchase" onAction={() => setFormOpen(true)} />
+        <EmptyState
+          message={anyFilterActive ? 'No purchases match these filters' : 'No purchases yet — record the first one'}
+          actionLabel={anyFilterActive ? undefined : 'Record purchase'}
+          onAction={anyFilterActive ? undefined : () => setFormOpen(true)}
+        />
       ) : (
         <DataTable<PurchaseOut>
           rows={rows}
@@ -161,7 +166,11 @@ export default function PurchasesPage() {
       <Dialog open={detailTarget !== null} onClose={() => setDetailTarget(null)} maxWidth="sm" fullWidth>
         <DialogTitle>Purchase detail</DialogTitle>
         <DialogContent>
-          {detailTarget && (
+          {detailTarget && (() => {
+            // Admin always qualifies (every line carries costPerBuyUnit/lineTotal); staff
+            // never does, since the API strips both fields entirely for that role.
+            const showCost = detailTarget.items.some((l) => l.costPerBuyUnit !== undefined);
+            return (
             <Stack spacing={2}>
               <Stack direction="row" spacing={1} sx={{ flexWrap: 'wrap' }}>
                 <Chip label={supplierMap.get(detailTarget.supplierId)?.name ?? EM_DASH} size="small" />
@@ -178,8 +187,8 @@ export default function PurchasesPage() {
                     <TableRow>
                       <TableCell>Material</TableCell>
                       <TableCell align="right">Quantity</TableCell>
-                      <TableCell align="right">Cost / unit</TableCell>
-                      <TableCell align="right">Line total</TableCell>
+                      {showCost && <TableCell align="right">Cost / unit</TableCell>}
+                      {showCost && <TableCell align="right">Line total</TableCell>}
                     </TableRow>
                   </TableHead>
                   <TableBody>
@@ -191,12 +200,16 @@ export default function PurchasesPage() {
                           <TableCell align="right" sx={{ fontFamily: monoFamily }}>
                             {qtyFmt(line.qtyBuyUnit, material?.buyUnit ?? '')}
                           </TableCell>
-                          <TableCell align="right">
-                            <MoneyText value={line.costPerBuyUnit} />
-                          </TableCell>
-                          <TableCell align="right">
-                            <MoneyText value={line.lineTotal} />
-                          </TableCell>
+                          {showCost && (
+                            <TableCell align="right">
+                              <MoneyText value={line.costPerBuyUnit} />
+                            </TableCell>
+                          )}
+                          {showCost && (
+                            <TableCell align="right">
+                              <MoneyText value={line.lineTotal} />
+                            </TableCell>
+                          )}
                         </TableRow>
                       );
                     })}
@@ -211,7 +224,8 @@ export default function PurchasesPage() {
                 <MoneyText value={detailTarget.totalAmount} variant="total" />
               </Box>
             </Stack>
-          )}
+            );
+          })()}
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2 }}>
           <Button onClick={() => setDetailTarget(null)}>Close</Button>

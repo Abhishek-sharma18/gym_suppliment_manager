@@ -27,6 +27,7 @@ import { useListQuery } from '@/lib/useListQuery';
 import { qtyFmt, localDateValue, EM_DASH } from '@/lib/fmt';
 import { monoFamily } from '@/lib/theme';
 import { FormDialog } from './FormDialog';
+import { ServerSearchSelect } from './ServerSearchSelect';
 import { useNotify } from './SnackbarProvider';
 
 interface ConsumptionRowState {
@@ -59,11 +60,11 @@ export function ProductionForm({ open, onClose }: ProductionFormProps) {
   const notify = useNotify();
   const queryClient = useQueryClient();
 
-  const { rows: products, isLoading: productsLoading } = useListQuery('products', productOut, { limit: 100 });
   const { rows: materials, isLoading: materialsLoading } = useListQuery('materials', materialOut, { limit: 100 });
-  const producibleProducts = products.filter((p) => p.bom.length > 0);
 
-  const [productId, setProductId] = useState('');
+  // Full object, not just the id: with server-side search the current results page may no
+  // longer contain the selection, so it can't be re-derived from the options list.
+  const [selectedProduct, setSelectedProduct] = useState<ProductOut | null>(null);
   const [qtyProduced, setQtyProduced] = useState('1');
   const [date, setDate] = useState(todayValue());
   const [expiryDate, setExpiryDate] = useState('');
@@ -73,7 +74,7 @@ export function ProductionForm({ open, onClose }: ProductionFormProps) {
   const [prevPrefillKey, setPrevPrefillKey] = useState(initialPrefillKey);
 
   const reset = () => {
-    setProductId('');
+    setSelectedProduct(null);
     setQtyProduced('1');
     setDate(todayValue());
     setExpiryDate('');
@@ -81,7 +82,6 @@ export function ProductionForm({ open, onClose }: ProductionFormProps) {
     setPrevPrefillKey(initialPrefillKey);
   };
 
-  const selectedProduct = products.find((p) => p._id === productId) ?? null;
   const qtyNum = Number(qtyProduced) || 0;
   const bomMap = new Map((selectedProduct?.bom ?? []).map((line) => [line.materialId, line.qtyPerUnit]));
 
@@ -91,7 +91,7 @@ export function ProductionForm({ open, onClose }: ProductionFormProps) {
   // Extra (manually added) rows survive the re-seed EXCEPT when the incoming recipe already
   // contains that material — keeping both would submit duplicate materialId lines, which the
   // backend accepts and posts as double consumption.
-  const prefillKey = `${productId}|${qtyProduced}`;
+  const prefillKey = `${selectedProduct?._id ?? ''}|${qtyProduced}`;
   if (prefillKey !== prevPrefillKey) {
     setPrevPrefillKey(prefillKey);
     setRows((rs) => {
@@ -122,7 +122,7 @@ export function ProductionForm({ open, onClose }: ProductionFormProps) {
       postJson<{ data: unknown }>(
         '/production',
         productionCreate.parse({
-          productId,
+          productId: selectedProduct?._id ?? '',
           qtyProduced: Number(qtyProduced),
           date,
           expiryDate: expiryDate.trim() || undefined,
@@ -167,25 +167,24 @@ export function ProductionForm({ open, onClose }: ProductionFormProps) {
       {({ fieldError }) => (
         <Stack spacing={2}>
           <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
-            <Autocomplete<ProductOut>
-              options={producibleProducts}
-              loading={productsLoading}
+            <ServerSearchSelect<ProductOut>
+              resource="products"
+              itemSchema={productOut}
+              getLabel={(p) => (p.variant ? `${p.name} (${p.variant})` : p.name)}
+              extraFilter={(p) => p.bom.length > 0}
+              // extraFilter narrows AFTER the server page, so with the default page size
+              // (20) a catalog where few products have a recipe could render an empty
+              // no-search dropdown. 100 matches the old fixed-page behavior.
+              limit={100}
               value={selectedProduct}
-              getOptionLabel={(p) => (p.variant ? `${p.name} (${p.variant})` : p.name)}
-              isOptionEqualToValue={(a, b) => a._id === b._id}
-              onChange={(_e, v) => setProductId(v?._id ?? '')}
+              onChange={setSelectedProduct}
+              label="Product"
+              placeholder="Choose a product"
+              error={Boolean(fieldError('productId'))}
+              helperText={fieldError('productId') ?? 'Only products with a recipe (BoM) can be produced'}
+              autoFocus
+              required
               sx={{ flex: 1 }}
-              renderInput={(params) => (
-                <TextField
-                  {...params}
-                  label="Product"
-                  placeholder="Choose a product"
-                  error={Boolean(fieldError('productId'))}
-                  helperText={fieldError('productId') ?? 'Only products with a recipe (BoM) can be produced'}
-                  autoFocus
-                  required
-                />
-              )}
             />
             <TextField
               label="Date"

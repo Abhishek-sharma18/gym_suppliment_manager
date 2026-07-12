@@ -252,9 +252,9 @@ export default function ProductsPage() {
 
       {!isLoading && rows.length === 0 ? (
         <EmptyState
-          message="No products yet — add the first one"
-          actionLabel={isAdmin ? 'Add product' : undefined}
-          onAction={isAdmin ? openCreate : undefined}
+          message={search ? 'No products match your search' : 'No products yet — add the first one'}
+          actionLabel={!search && isAdmin ? 'Add product' : undefined}
+          onAction={!search && isAdmin ? openCreate : undefined}
         />
       ) : (
         <DataTable<ProductOut>

@@ -32,6 +32,7 @@ import AssessmentOutlinedIcon from '@mui/icons-material/AssessmentOutlined';
 import ManageAccountsOutlinedIcon from '@mui/icons-material/ManageAccountsOutlined';
 import { useMe, useLogout } from '@/lib/auth';
 import { ApiClientError } from '@/lib/api';
+import { useNotify } from './SnackbarProvider';
 
 const DRAWER_WIDTH = 232;
 
@@ -66,6 +67,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const { data: me, isLoading, isError, error, refetch } = useMe();
   const logout = useLogout();
+  const notify = useNotify();
   const [mobileOpen, setMobileOpen] = useState(false);
 
   const unauthenticated = error instanceof ApiClientError && error.status === 401;
@@ -113,6 +115,8 @@ export function AppShell({ children }: { children: ReactNode }) {
   const handleLogout = async () => {
     try {
       await logout.mutateAsync();
+    } catch {
+      notify('Logout failed - try again', 'error');
     } finally {
       router.replace('/login');
     }

@@ -3,7 +3,6 @@
 import { useState } from 'react';
 import Box from '@mui/material/Box';
 import TextField from '@mui/material/TextField';
-import Autocomplete from '@mui/material/Autocomplete';
 import Stack from '@mui/material/Stack';
 import type { GridColDef, GridPaginationModel } from '@mui/x-data-grid';
 import { saleOut, customerOut, type SaleOut, type CustomerOut } from '@gym/shared';
@@ -15,6 +14,7 @@ import { PageHeader } from '@/components/PageHeader';
 import { DataTable } from '@/components/DataTable';
 import { MoneyText } from '@/components/MoneyText';
 import { EmptyState } from '@/components/EmptyState';
+import { ServerSearchSelect } from '@/components/ServerSearchSelect';
 import { SaleEntry } from '@/components/SaleEntry';
 import { SaleDetailDialog } from '@/components/SaleDetailDialog';
 
@@ -42,7 +42,10 @@ export default function SalesPage() {
     from: fromDate || undefined,
     to: toDate || undefined,
   });
+  const anyFilterActive = Boolean(customerFilter || fromDate || toDate);
 
+  // Separate from the filter's own server-searched fetch below — this resolves whichever
+  // customer names the current page of sales rows references, not a search-scoped page.
   const { rows: customers } = useListQuery('customers', customerOut, { limit: 100 });
   const customerMap = new Map(customers.map((c) => [c._id, c]));
 
@@ -97,15 +100,16 @@ export default function SalesPage() {
       <SaleEntry />
 
       <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ mb: 2 }}>
-        <Autocomplete<CustomerOut>
-          options={customers}
+        <ServerSearchSelect<CustomerOut>
+          resource="customers"
+          itemSchema={customerOut}
+          getLabel={(c) => c.name}
           value={customerFilter}
-          getOptionLabel={(c) => c.name}
-          isOptionEqualToValue={(a, b) => a._id === b._id}
-          onChange={(_e, v) => setCustomerFilter(v)}
+          onChange={setCustomerFilter}
+          label="Customer"
+          placeholder="All customers"
           size="small"
           sx={{ minWidth: 220 }}
-          renderInput={(params) => <TextField {...params} label="Customer" placeholder="All customers" />}
         />
         <TextField
           label="From"
@@ -126,7 +130,11 @@ export default function SalesPage() {
       </Stack>
 
       {!isLoading && rows.length === 0 ? (
-        <EmptyState message="No sales yet — the form above records the first one" />
+        <EmptyState
+          message={
+            anyFilterActive ? 'No sales match these filters' : 'No sales yet — the form above records the first one'
+          }
+        />
       ) : (
         <DataTable<SaleOut>
           rows={rows}
