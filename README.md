@@ -186,3 +186,42 @@ changes: with no `API_PROXY_URL` set, the rewrite is inactive and `NEXT_PUBLIC_A
 4. **Post-deploy checklist:** log in, immediately change the seeded admin and staff passwords (Users
    page), verify a sale round-trips end to end, and confirm Atlas Network Access allows `0.0.0.0/0`
    (or the specific Render outbound IPs) so the backend can reach the cluster.
+
+## Performance
+
+The Render free plan spins the backend down after ~15 min idle; the first request after that pays a
+cold-start penalty of ~50s while the dyno boots. This is a Render free-tier behavior, not something
+the app can fix — the two options are living with it or upgrading to Render's paid **Starter plan**
+($7/mo), which keeps the service running and removes cold starts entirely.
+
+Until then, this repo works around it and trims what it can:
+
+- **Keep-alive ping:** `.github/workflows/keepalive.yml` curls `/api/health` every 10 minutes
+  (`schedule` + a manual `workflow_dispatch` trigger) to keep the free-tier dyno warm, so real user
+  requests rarely hit a cold start. A failed ping is swallowed (`|| true`) so a transient network
+  blip or a deploy in progress never marks the workflow (or the repo) red. GitHub Actions' cron
+  scheduler is best-effort and can lag a few minutes behind the stated schedule — that's expected,
+  not a bug. This workflow becomes unnecessary (and can be deleted) once the backend is on the
+  Starter plan.
+- **Region alignment:** `render.yaml` pins the backend to `region: singapore`, matching a MongoDB
+  Atlas cluster on AWS `ap-south-1` (Mumbai) — the common case for this project (see "Creating a
+  free MongoDB Atlas cluster" above). Every database round trip is faster when the API server and
+  the database are in the same region instead of crossing an ocean on every query. To check your own
+  Atlas cluster's region: Atlas dashboard → your cluster → **Overview** (or **Edit configuration**)
+  shows the cloud provider and region it was created in (e.g. "AWS / Mumbai (ap-south-1)"). If yours
+  is in the US or EU, change `region` in `render.yaml` to the matching Render region (e.g. `oregon`
+  or `frankfurt`) instead of `singapore`. **Render cannot move an existing service between regions**
+  — after merging a region change, delete the service in the Render dashboard and re-create it from
+  the same Blueprint so the new region actually takes effect.
+- **Response compression:** the backend applies gzip/deflate compression (`compression` middleware,
+  `threshold: 512` bytes) to every response, so list/report JSON payloads transfer smaller over the
+  wire — useful in general, and especially so given the free tier's limited bandwidth. Tiny
+  responses (like the `/api/health` ping) fall under the threshold and are sent uncompressed, since
+  compressing a few bytes only adds overhead.
+- **Lazy chart bundle:** the Reports page's Trends chart (`@mui/x-charts`) is loaded with
+  `next/dynamic` (`ssr: false`) instead of a static import, so that dependency — the single heaviest
+  one on the Reports route — ships in its own chunk that only downloads when an admin actually opens
+  Reports, instead of bloating the route's first-load JS for everyone. Measured with
+  `npm run build --workspace frontend`: the Reports route's page-specific first-load JS dropped from
+  ~406 KB to ~97 KB (the ~270 KB `@mui/x-charts` chunk moved out of the initial bundle into an
+  on-demand chunk); other routes' bundle sizes were unaffected by this change.
