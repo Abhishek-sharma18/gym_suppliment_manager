@@ -108,6 +108,27 @@ export function LandingPage() {
             const scale = isMobile ? 0.7 : 1;
             const counter = { value: 0 };
 
+            // The blink tween MUST be created here, during this synchronous matchMedia pass:
+            // gsap only registers an animation with the surrounding gsap.context() while the
+            // context callback is executing (it stamps a module-global `_context` around the
+            // call - see Animation's constructor in gsap-core). A tween created later, e.g.
+            // inside the timeline's deferred `.add()` callback (which fires from gsap's
+            // ticker), would never join the context, so ctx.revert() on unmount could not
+            // kill it and its `repeat: -1` would keep the RAF ticker alive against a
+            // detached node for the life of the tab. Created paused (start values are
+            // captured lazily on first render, i.e. only after the timeline has already set
+            // the cursor's opacity to 1) and merely play()-ed by the timeline callback.
+            const cursorBlink = cursorEl
+              ? gsap.to(cursorEl, {
+                  opacity: 0,
+                  duration: 0.6,
+                  repeat: -1,
+                  yoyo: true,
+                  ease: 'steps(1)',
+                  paused: true,
+                })
+              : null;
+
             const tl = gsap.timeline({ defaults: { ease: 'power2.out' } });
             tl.to(lines, { strokeDashoffset: 0, duration: 0.5 * scale, stagger: 0.12 * scale })
               .to(rows, { opacity: 1, y: 0, duration: 0.35 * scale, stagger: 0.3 * scale }, '-=0.15')
@@ -123,13 +144,13 @@ export function LandingPage() {
                 },
                 '-=0.1',
               )
-              .to(doubleRule, { strokeDashoffset: 0, duration: 0.4 * scale }, '-=0.1')
-              .add(() => {
-                if (cursorEl) {
-                  gsap.set(cursorEl, { opacity: 1 });
-                  gsap.to(cursorEl, { opacity: 0, duration: 0.6, repeat: -1, yoyo: true, ease: 'steps(1)' });
-                }
+              .to(doubleRule, { strokeDashoffset: 0, duration: 0.4 * scale }, '-=0.1');
+
+            if (cursorEl && cursorBlink) {
+              tl.set(cursorEl, { opacity: 1 }).add(() => {
+                cursorBlink.play();
               });
+            }
 
             gsap.from(featureItems, {
               opacity: 0,
