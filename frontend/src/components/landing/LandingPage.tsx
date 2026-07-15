@@ -19,9 +19,12 @@ const RUPEE = '\u20B9';
 
 const TOTAL = 8500;
 
-// Minimal local shape for gsap's matchMedia callback argument - deliberately narrower than
-// gsap's own (richer) Context type so this file doesn't depend on its exact shape.
-type MatchMediaContext = { conditions: { isMobile: boolean; reduceMotion: boolean } };
+// Shape of the two named matchMedia conditions registered below. gsap's own `Context.conditions`
+// type is a plain string-indexed `{[key: string]: boolean}` (it can't know our condition names
+// ahead of time), so we cast into this narrower shape inside the callback rather than annotating
+// the callback parameter itself - that keeps the callback structurally assignable to gsap's own
+// `ContextFunc` type.
+type LandingConditions = { isMobile: boolean; reduceMotion: boolean };
 
 function formatTotal(value: number): string {
   return `${RUPEE}${Math.round(value).toLocaleString('en-IN')}`;
@@ -81,8 +84,8 @@ export function LandingPage() {
             isMobile: '(max-width: 599.95px)',
             reduceMotion: '(prefers-reduced-motion: reduce)',
           },
-          (context: MatchMediaContext) => {
-            const { isMobile, reduceMotion } = context.conditions;
+          (context) => {
+            const { isMobile = false, reduceMotion = false } = (context.conditions ?? {}) as Partial<LandingConditions>;
 
             const lines = gsap.utils.toArray('.ledger-rule') as SVGLineElement[];
             const doubleRule = gsap.utils.toArray('.ledger-double-rule') as SVGLineElement[];
@@ -202,7 +205,11 @@ export function LandingPage() {
         <Container maxWidth="lg">
           <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, flexWrap: 'wrap', gap: { xs: 3, sm: 4 } }}>
             {FEATURES.map((feature) => (
-              <Box key={feature.title} className="feature-item" sx={{ flex: '1 1 200px', minWidth: 0 }}>
+              <Box
+                key={feature.title}
+                className="feature-item"
+                sx={{ flex: { xs: '0 0 auto', sm: '1 1 200px' }, minWidth: 0 }}
+              >
                 <Box sx={{ color: KHATA.red, display: 'flex', mb: 1 }}>{feature.icon}</Box>
                 <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 0.5 }}>
                   {feature.title}

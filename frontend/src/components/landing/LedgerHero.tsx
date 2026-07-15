@@ -27,7 +27,10 @@ const ENTRIES = [
 // its rule line; the double rule closes the block underneath the total.
 const ROW_TOP = ['6%', '30%', '54%'] as const;
 const RULE_Y = [66, 128, 190] as const;
-const TOTAL_TOP = '76%';
+// Enough vertical clearance above the double rule for the total row's larger font (up to
+// 1.4rem at sm+) plus its line-height, even on the shortest (narrowest, mobile) box - otherwise
+// the double rule visually strikes through the total number instead of sitting beneath it.
+const TOTAL_TOP = '67%';
 const DOUBLE_RULE_Y = [244, 254] as const;
 
 export function LedgerHero() {
@@ -125,25 +128,31 @@ export function LedgerHero() {
         >
           BALANCE
         </Typography>
-        <Typography
-          component="span"
-          className="ledger-total"
-          sx={{ fontFamily: monoFamily, fontWeight: 500, fontSize: { xs: '1.15rem', sm: '1.4rem' }, color: KHATA.ink }}
-        >
-          {'\u20B90'}
-        </Typography>
-        <Box
-          component="span"
-          className="ledger-cursor"
-          sx={{
-            fontFamily: monoFamily,
-            fontSize: { xs: '1.15rem', sm: '1.4rem' },
-            color: KHATA.red,
-            opacity: 0,
-          }}
-          aria-hidden="true"
-        >
-          _
+        {/* Total + cursor share one flex item so the row's `space-between` only ever has two
+            children - with three children the total would land near the row's midpoint instead
+            of flush against its right edge, which on a narrow (mobile) box visually collides
+            with BALANCE on the left. */}
+        <Box sx={{ display: 'flex', alignItems: 'baseline' }}>
+          <Typography
+            component="span"
+            className="ledger-total"
+            sx={{ fontFamily: monoFamily, fontWeight: 500, fontSize: { xs: '1.15rem', sm: '1.4rem' }, color: KHATA.ink }}
+          >
+            {'\u20B90'}
+          </Typography>
+          <Box
+            component="span"
+            className="ledger-cursor"
+            sx={{
+              fontFamily: monoFamily,
+              fontSize: { xs: '1.15rem', sm: '1.4rem' },
+              color: KHATA.red,
+              opacity: 0,
+            }}
+            aria-hidden="true"
+          >
+            _
+          </Box>
         </Box>
       </Box>
     </Box>
