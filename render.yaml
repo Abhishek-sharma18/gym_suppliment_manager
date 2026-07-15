@@ -3,6 +3,17 @@ services:
     name: gym-khata-api
     runtime: node
     plan: free
+    # Render cannot move an existing service between regions after creation - changing
+    # this value on an already-deployed service has no effect. To actually apply a region
+    # change: merge this file, then in the Render dashboard delete the gym-khata-api
+    # service and re-create it from the same Blueprint (New + Blueprint, same repo) so it
+    # picks up `region` at creation time.
+    # `singapore` is picked to sit next to a MongoDB Atlas cluster on AWS ap-south-1
+    # (Mumbai) - the common case for this project (see README "Creating a free MongoDB
+    # Atlas cluster"). If your Atlas cluster is deployed in the US or EU instead, use the
+    # matching Render region (e.g. `oregon` or `frankfurt`) so the backend and database
+    # stay in the same region and every DB round trip isn't crossing an ocean.
+    region: singapore
     # NOTE: with NODE_ENV=production, npm OMITS devDependencies by default.
     # tsx (the runtime that executes the TS server) therefore lives in backend's
     # regular dependencies, not devDependencies. Do not move it back.

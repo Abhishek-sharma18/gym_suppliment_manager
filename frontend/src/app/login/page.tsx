@@ -22,14 +22,14 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
 
   useEffect(() => {
-    if (isSuccess && me) router.replace('/');
+    if (isSuccess && me) router.replace('/dashboard');
   }, [isSuccess, me, router]);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     try {
       await login.mutateAsync({ email, password });
-      router.replace('/');
+      router.replace('/dashboard');
     } catch {
       // surfaced via login.error below
     }

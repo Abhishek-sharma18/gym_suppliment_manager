@@ -1,5 +1,6 @@
 import express from 'express';
 import cors from 'cors';
+import compression from 'compression';
 import cookieParser from 'cookie-parser';
 import { errorHandler } from './lib/errors';
 import { authRouter } from './routes/auth';
@@ -25,6 +26,11 @@ export function createApp(): express.Express {
     // the real client IP instead of Vercel's egress IP.
     app.set('trust proxy', 2);
   }
+
+  // gzip/deflate response bodies. threshold: 512 (not the 1KB default) skips compressing
+  // tiny payloads like the /api/health ping while still compressing list/report JSON, which
+  // is where compression actually pays off on the Render free-tier's limited egress.
+  app.use(compression({ threshold: 512 }));
 
   app.use(cors({
     origin: process.env.CLIENT_URL || 'http://localhost:3000',

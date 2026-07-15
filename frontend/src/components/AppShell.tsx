@@ -44,7 +44,7 @@ type NavItem = {
 };
 
 const NAV_ITEMS: NavItem[] = [
-  { label: 'Dashboard', href: '/', icon: <SpaceDashboardOutlinedIcon /> },
+  { label: 'Dashboard', href: '/dashboard', icon: <SpaceDashboardOutlinedIcon /> },
   { label: 'Sales', href: '/sales', icon: <PointOfSaleOutlinedIcon /> },
   { label: 'Production', href: '/production', icon: <PrecisionManufacturingOutlinedIcon /> },
   { label: 'Purchases', href: '/purchases', icon: <ShoppingCartOutlinedIcon /> },
@@ -58,7 +58,6 @@ const NAV_ITEMS: NavItem[] = [
 ];
 
 function isActive(pathname: string, href: string): boolean {
-  if (href === '/') return pathname === '/';
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 

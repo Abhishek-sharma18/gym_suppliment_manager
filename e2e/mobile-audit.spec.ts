@@ -17,6 +17,11 @@ const SCREENSHOT_ROOT = path.join('.superpowers', 'sdd', 'mobile-audit');
 // wait here (rather than waiting on some specific animation-end signal) is an acceptable tradeoff.
 const TRANSITION_SETTLE_MS = 300;
 
+// The landing hero's GSAP entrance sequence is timed to settle in well under 2.5s (see
+// LandingPage.tsx) - wait it out fully before screenshotting so the shot shows the finished
+// ledger, not a mid-draw frame.
+const HERO_SETTLE_MS = 2800;
+
 /**
  * No page-level horizontal scroll: `document.documentElement.scrollWidth` must not exceed its
  * `clientWidth` (a 1px tolerance absorbs subpixel rounding). Any table/grid/dialog overflow must
@@ -58,6 +63,19 @@ function shoot(page: Page, viewportName: string, name: string): Promise<Buffer> 
 /** Visits every page, opens each one's primary dialog/drawer where applicable, asserting no
  * page-level overflow at every step and saving a full-page screenshot. */
 async function runFullAudit(page: Page, viewportName: string): Promise<void> {
+  // Landing - the one page outside the authenticated app shell, so it's visited first, before
+  // logging in. The hero's entrance sequence is time-boxed (see HERO_SETTLE_MS); the features
+  // band animates in on scroll via ScrollTrigger, so scroll to the bottom once to trigger it -
+  // once played it stays revealed regardless of scroll position, so the full-page screenshot
+  // (which captures the whole page regardless of current scroll) reflects the settled end-state.
+  await page.goto('/');
+  await expect(page.getByRole('heading', { name: 'Gym Khata', level: 1 })).toBeVisible();
+  await page.waitForTimeout(HERO_SETTLE_MS);
+  await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
+  await page.waitForTimeout(TRANSITION_SETTLE_MS);
+  await assertNoPageOverflow(page, 'landing');
+  await shoot(page, viewportName, 'landing');
+
   await login(page, ADMIN);
   await expect(page.getByText("Today's take")).toBeVisible();
   await assertNoPageOverflow(page, 'dashboard');

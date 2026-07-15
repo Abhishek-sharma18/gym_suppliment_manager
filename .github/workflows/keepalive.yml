@@ -1,0 +1,22 @@
+name: Keep-alive ping
+
+# Render's free plan spins the backend down after ~15 min idle; the next request then
+# pays a ~50s cold-start penalty. This workflow pings the health endpoint every 10
+# minutes to keep the service warm. GitHub Actions' scheduled cron is best-effort and
+# can lag a few minutes behind the schedule under load, so treat "every 10 minutes" as
+# approximate, not a guarantee. This workflow becomes unnecessary once the service is
+# upgraded to Render's paid Starter plan (no idle spin-down), at which point it can be
+# deleted.
+on:
+  schedule:
+    - cron: '*/10 * * * *'
+  workflow_dispatch: {}
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping backend health endpoint
+        # A failed ping (deploy in progress, transient network blip, etc.) must not mark
+        # this workflow - or the repo - red, hence the `|| true`.
+        run: curl --max-time 60 https://gym-khata-api.onrender.com/api/health || true
